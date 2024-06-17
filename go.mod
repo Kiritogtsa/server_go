@@ -1,4 +1,4 @@
-module server
+module github.com/Kiritogtsa/server_go
 
 go 1.22.4
 

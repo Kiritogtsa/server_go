@@ -7,8 +7,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"server/src/models"
-	"server/src/models/vendedor"
+	"github.com/Kiritogtsa/server_go/src/models"
+	"github.com/Kiritogtsa/server_go/src/models/vendedor"
 )
 
 const Dns string = "root:1234@tcp(127.0.0.1:3306)/loja"

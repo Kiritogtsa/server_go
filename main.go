@@ -10,12 +10,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	//"server/src/controller/methods"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"server/src/controller/methods"
-	//"server/src/controller/methods"
+	"github.com/Kiritogtsa/server_go/src/controller/methods"
 )
 
 // The serveFile function serves a specified file over HTTP with the appropriate content type based on

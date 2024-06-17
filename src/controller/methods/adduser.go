@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"server/src/models/users"
-	"server/src/models/vendedor"
+	"github.com/Kiritogtsa/server_go/src/models/users"
+	"github.com/Kiritogtsa/server_go/src/models/vendedor"
 )
 
 func AddUser(w http.ResponseWriter, r *http.Request) {

@@ -3,7 +3,7 @@ package users
 import (
 	"errors"
 
-	"server/src/models/vendedor"
+	"github.com/Kiritogtsa/server_go/src/models/vendedor"
 )
 
 type User struct {

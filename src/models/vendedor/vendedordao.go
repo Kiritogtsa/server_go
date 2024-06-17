@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log"
 
-	"server/src/models"
+	"github.com/Kiritogtsa/server_go/src/models"
 )
 
 const Dns string = "root:1234@tcp(127.0.0.1:3306)/loja"
