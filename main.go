@@ -82,6 +82,7 @@ func handleMethod(w http.ResponseWriter, r *http.Request) {
 func server() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	//switch routes for mount, in chi at goland
 	r.Get("/*", handleMethod)
 	r.Post("/user", methods.AddUser)
 	fmt.Println("servidor roando em http://localhost:8000")
@@ -99,7 +100,7 @@ func main() {
 		fmt.Println("Erro ao obter o diretório de trabalho atual", err, cwd)
 		return
 	}
-	newDir := os.Getenv("HOME") + "/java"
+	newDir := os.Getenv("HOME") + "/go_server"
 	err = os.Chdir(newDir)
 	if err != nil {
 		fmt.Println("Erro ao obter o diretório de trabalho atual", err)
