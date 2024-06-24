@@ -10,13 +10,20 @@ import (
 
 const Dns string = "root:1234@tcp(127.0.0.1:3306)/loja"
 
-// Vendedordao representa o DAO para a entidade Vendedor
+type Vendedorinterface interface {
+	Persist(*Vendedor) (*Vendedor, error)
+	insert(*Vendedor) (*Vendedor, error)
+	update(*Vendedor) (*Vendedor, error)
+	FindById(int) (*Vendedor, error)
+	FindByUserid(int) (*Vendedor, error)
+	Delete(int) error
+}
+
 type Vendedordao struct {
 	Conn *models.Conn
 }
 
-// NewVendedordao cria uma nova instância do DAO Vendedordao
-func NewVendedordao() (*Vendedordao, error) {
+func NewVendedordao() (Vendedorinterface, error) {
 	conn, err := models.NewConn(Dns)
 	if err != nil {
 		return nil, errors.New("erro ao criar a conexão com o banco de dados")
@@ -25,7 +32,7 @@ func NewVendedordao() (*Vendedordao, error) {
 }
 
 // Insert insere um novo vendedor no banco de dados
-func (coon *Vendedordao) Insert(vendedor *Vendedor) (*Vendedor, error) {
+func (coon *Vendedordao) insert(vendedor *Vendedor) (*Vendedor, error) {
 	dao := coon.Conn.Getdb()
 	if dao == nil {
 		return nil, errors.New("erro ao obter a conexão com o banco de dados")
@@ -55,34 +62,34 @@ func (coon *Vendedordao) Insert(vendedor *Vendedor) (*Vendedor, error) {
 }
 
 // Update atualiza um vendedor existente no banco de dados
-func (conn *Vendedordao) Update(vendedor *Vendedor) error {
+func (conn *Vendedordao) update(vendedor *Vendedor) (*Vendedor, error) {
 	dao := conn.Conn.Getdb()
 	if dao == nil {
-		return nil
+		return nil, errors.New("nao abriu o db")
 	}
 	query := "UPDATE vendedores SET usuario_id = ?, produtos = ? WHERE id = ?"
 	stmt, err := dao.Prepare(query)
 	if err != nil {
 		log.Println("Erro ao preparar a instrução SQL:", err)
-		return err
+		return nil, err
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(vendedor.GetuserId(), vendedor.Getquant(), vendedor.GetId())
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return vendedor, nil
 }
 
 // Persist persiste o vendedor no banco de dados (insere ou atualiza dependendo da existência do ID)
 func (dao *Vendedordao) Persist(vendedor *Vendedor) (*Vendedor, error) {
 	if vendedor.GetId() == 0 {
-		return dao.Insert(vendedor)
+		return dao.insert(vendedor)
 	}
-	err := dao.Update(vendedor)
+	vendedor, err := dao.update(vendedor)
 	if err != nil {
 		return nil, err
 	}
