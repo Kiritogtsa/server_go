@@ -10,12 +10,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	//"server/src/controller/methods"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/Kiritogtsa/server_go/src/controller/methods"
+	methods "github.com/Kiritogtsa/server_go/src/controller/methods/user"
 )
 
 // The serveFile function serves a specified file over HTTP with the appropriate content type based on
@@ -84,7 +83,10 @@ func server() {
 	r.Use(middleware.Logger)
 	//switch routes for mount, in chi at goland
 	r.Get("/*", handleMethod)
+	r.Put("/user", methods.Update)
 	r.Post("/user", methods.AddUser)
+	r.Get("/user", methods.Getall)
+	r.Get("/user/{user_id}", methods.GetbyID)
 	fmt.Println("servidor roando em http://localhost:8000")
 	err := http.ListenAndServe(":8000", r)
 	if err != nil {

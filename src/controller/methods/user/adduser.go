@@ -3,6 +3,7 @@ package methods
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -61,35 +62,35 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("erro ao criar o userdao: %v", err), http.StatusBadRequest)
 		return
 	}
-	userdao, err = userdao.Persistir(user, is_vendedor)
+	user, err = userdao.Persistir(user, is_vendedor)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf("erro ao adicionar o usuario no db: %v", err), http.StatusBadRequest)
 		return
 	}
-	user, err = userdao.SeachbyName(user.GetName())
-	if err != nil {
-		http.Error(w, fmt.Sprintf("erro ao recuperar o usuario: %v", err), http.StatusBadRequest)
-		return
-	}
-	if is_vendedor == "1" {
-		vendedordao, err := vendedor.NewVendedordao()
-		if err != nil {
-			http.Error(w, fmt.Sprintf("erro ao criar o userdao: %v", err), http.StatusBadRequest)
-			return
+	if user.GetID() != 0 {
+
+		if is_vendedor == "1" {
+			vendedordao, err := vendedor.NewVendedordao()
+			if err != nil {
+				http.Error(w, fmt.Sprintf("erro ao criar o userdao: %v", err), http.StatusBadRequest)
+				return
+			}
+			vendedor, err := vendedor.Newvendedor(user.GetID(), 0)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("erro ao criar o venedor na instacia: %v", err), http.StatusBadRequest)
+				return
+			}
+			vendedor, err = vendedordao.Persist(vendedor)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("erro ao criar o venedor na instacia: %v", err), http.StatusBadRequest)
+				return
+			}
+			user.SetVendedor(vendedor)
+			userdao.Persistir(user, "1")
 		}
-		vendedor, err := vendedor.Newvendedor(user.GetID(), 0)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("erro ao criar o venedor na instacia: %v", err), http.StatusBadRequest)
-			return
-		}
-		vendedor, err = vendedordao.Persist(vendedor)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("erro ao criar o venedor na instacia: %v", err), http.StatusBadRequest)
-			return
-		}
-		user.SetVendedor(vendedor)
-		userdao.Persistir(user, "1")
+	} else {
+		log.Println("deu algum erro", err)
 	}
 
 	fmt.Printf("Usuário criado: %+v\n", user)
