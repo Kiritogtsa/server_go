@@ -7,12 +7,13 @@ import (
 )
 
 type User struct {
-	id       int
-	name     string
-	email    string
-	senha    string
-	vendedor *vendedor.Vendedor
-	saldo    float64
+	ID         int                `json:"id"`
+	Name       string             `json:"name"`
+	Email      string             `json:"email"`
+	Senha      string             `json:"-"`
+	Vendedor   *vendedor.Vendedor `json:"-"`
+	Vendedorid int                `json:"vendedorid"`
+	Saldo      float64            `json:"saldo"`
 }
 
 func NewUser(nome string, email string, senha string, vendedor *vendedor.Vendedor) (*User, error) {
@@ -20,55 +21,57 @@ func NewUser(nome string, email string, senha string, vendedor *vendedor.Vendedo
 		return nil, errors.New("faltando uma variável (nome, email ou senha)")
 	}
 	return &User{
-		name:     nome,
-		email:    email,
-		senha:    senha,
-		vendedor: vendedor,
+		Name:     nome,
+		Email:    email,
+		Senha:    senha,
+		Vendedor: vendedor,
 	}, nil
 }
 
 func (user *User) GetVendedor() *vendedor.Vendedor {
-	return user.vendedor
+	return user.Vendedor
 }
+
 func (user *User) SetVendedor(vendedor *vendedor.Vendedor) {
-	user.vendedor = vendedor
+	user.Vendedor = vendedor
 }
 
 func (user *User) GetSaldo() float64 {
-	return user.saldo
+	return user.Saldo
 }
 
 func (user *User) SetSaldo(saldo float64) {
-	user.saldo = saldo
+	user.Saldo = saldo
 }
+
 func (user *User) SetName(nome string) {
-	user.name = nome
+	user.Name = nome
 }
 
 func (user *User) GetName() string {
-	return user.name
+	return user.Name
 }
 
 func (user *User) SetEmail(email string) {
-	user.email = email
+	user.Email = email
 }
 
 func (user *User) GetEmail() string {
-	return user.email
+	return user.Email
 }
 
 func (user *User) SetSenha(senha string) {
-	user.senha = senha
+	user.Senha = senha
 }
 
 func (user *User) GetSenha() string {
-	return user.senha
+	return user.Senha
 }
 
 func (user *User) SetID(id int) {
-	user.id = id
+	user.ID = id
 }
 
 func (user *User) GetID() int {
-	return user.id
+	return user.ID
 }

@@ -13,13 +13,20 @@ import (
 
 const Dns string = "root:1234@tcp(127.0.0.1:3306)/loja"
 
-// Userdao é a estrutura para lidar com operações do usuário no banco de dados.
+type Userdaointerface interface {
+	insert(*User, string) (*User, error)
+	update(*User) (*User, error)
+	Persistir(*User, string) (*User, error)
+	Seachbyid(int) (*User, error)
+	SeachbyName(string) (*User, error)
+	SeachbyALL() ([]*User, error)
+}
 type Userdao struct {
 	Conn *models.Conn
 }
 
 // NewUserdao cria uma nova instância de Userdao.
-func NewUserdao() (*Userdao, error) {
+func NewUserdao() (Userdaointerface, error) {
 	conn, err := models.NewConn(Dns)
 	if err != nil {
 		return nil, errors.New("erro ao criar a conexão com o banco de dados")
@@ -28,15 +35,15 @@ func NewUserdao() (*Userdao, error) {
 }
 
 // insert insere um novo usuário no banco de dados.
-func (userdao *Userdao) insert(user *User, is_vendedor string) (*Userdao, error) {
+func (userdao *Userdao) insert(user *User, is_vendedor string) (*User, error) {
 	db := userdao.Conn.Getdb()
 	if db == nil {
-		return userdao, errors.New("erro ao obter a conexão com o banco de dados")
+		return user, errors.New("erro ao obter a conexão com o banco de dados")
 	}
 
 	hashsenha, err := bcrypt.GenerateFromPassword([]byte(user.GetSenha()), bcrypt.DefaultCost)
 	if err != nil {
-		return userdao, err
+		return user, err
 	}
 	user.SetSenha(string(hashsenha))
 
@@ -44,7 +51,7 @@ func (userdao *Userdao) insert(user *User, is_vendedor string) (*Userdao, error)
 	stmt, err := db.Prepare(sql)
 	if err != nil {
 		log.Println("Erro ao preparar a instrução SQL:", err)
-		return userdao, err
+		return user, err
 	}
 	defer stmt.Close()
 
@@ -57,31 +64,30 @@ func (userdao *Userdao) insert(user *User, is_vendedor string) (*Userdao, error)
 	result, err := stmt.Exec(user.GetName(), user.GetEmail(), user.GetSenha(), is_vendedor, vendedorID, user.GetSaldo())
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
-		return userdao, err
+		return user, err
 	}
-
+	id, err := result.LastInsertId()
+	if err != nil {
+		log.Println("erro ao obtem o id de insert", err)
+		return nil, err
+	}
+	user.SetID(int(id))
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		log.Println("Erro ao obter o número de linhas afetadas:", err)
-		return userdao, err
+		return user, err
 	}
 
 	fmt.Printf("Inseridos %d registros.\n", rowsAffected)
-	return userdao, nil
+	return user, nil
 }
 
 // update atualiza um usuário existente no banco de dados.
-func (userdao *Userdao) update(user *User, is_vendedor string) (*Userdao, error) {
+func (userdao *Userdao) update(user *User) (*User, error) {
 	db := userdao.Conn.Getdb()
 	if db == nil {
 		return nil, errors.New("erro ao obter a conexão com o banco de dados")
 	}
-
-	hashsenha, err := bcrypt.GenerateFromPassword([]byte(user.GetSenha()), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
-	}
-	user.SetSenha(string(hashsenha))
 
 	// Determinar o `vendedor_id`
 	var vendedorID interface{} = nil
@@ -92,7 +98,7 @@ func (userdao *Userdao) update(user *User, is_vendedor string) (*Userdao, error)
 	fmt.Println("aqui update usuarui")
 
 	// Atualização com possibilidade de NULL para `vendedor_id`
-	sql := "UPDATE usuario SET nome = ?, email = ?, senha = ?,vendedor = ?, vendedor_id = ?, saldo = ? WHERE id = ?"
+	sql := "UPDATE usuario SET nome = ?, email = ?, senha = ?, vendedor_id = ?, saldo = ? WHERE id = ?"
 	stmt, err := db.Prepare(sql)
 	if err != nil {
 		log.Println("Erro ao preparar a instrução SQL:", err)
@@ -100,22 +106,22 @@ func (userdao *Userdao) update(user *User, is_vendedor string) (*Userdao, error)
 	}
 	fmt.Println("aqui update depois")
 
-	_, err = stmt.Exec(user.GetName(), user.GetEmail(), user.GetSenha(), is_vendedor, vendedorID, user.GetSaldo(), user.GetID())
+	_, err = stmt.Exec(user.GetName(), user.GetEmail(), user.GetSenha(), vendedorID, user.GetSaldo(), user.GetID())
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return nil, err
 	}
 
 	fmt.Printf("Registro com ID %d atualizado com sucesso.\n", user.GetID())
-	return userdao, nil
+	return user, nil
 }
 
 // Persistir insere ou atualiza o usuário no banco de dados.
-func (userdao *Userdao) Persistir(user *User, is_vendedor string) (*Userdao, error) {
+func (userdao *Userdao) Persistir(user *User, is_vendedor string) (*User, error) {
 	if user.GetID() == 0 {
 		return userdao.insert(user, is_vendedor)
 	}
-	return userdao.update(user, is_vendedor)
+	return userdao.update(user)
 }
 
 // Seachbyid busca um usuário pelo ID no banco de dados.
@@ -136,7 +142,7 @@ func (userdao *Userdao) Seachbyid(id int) (*User, error) {
 	user := &User{}
 	var vendedorID *int
 
-	err = stmt.QueryRow(id).Scan(&user.id, &user.name, &user.email, &user.senha, &vendedorID, &user.saldo)
+	err = stmt.QueryRow(id).Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return nil, err
@@ -172,7 +178,7 @@ func (userdao *Userdao) SeachbyName(name string) (*User, error) {
 
 	var vendedorID *int
 
-	err = stmt.QueryRow(name).Scan(&user.id, &user.name, &user.email, &user.senha, &vendedorID, &user.saldo)
+	err = stmt.QueryRow(name).Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return nil, err
@@ -191,4 +197,52 @@ func (userdao *Userdao) SeachbyName(name string) (*User, error) {
 	}
 	fmt.Println("termina aqui")
 	return user, nil
+}
+
+// SeachAll busca todos os usuários no banco de dados.
+func (userdao *Userdao) SeachbyALL() ([]*User, error) {
+	db := userdao.Conn.Getdb()
+	if db == nil {
+		return nil, errors.New("erro ao obter a conexão com o banco de dados")
+	}
+
+	sql := "SELECT id, nome, email, senha, vendedor_id, saldo FROM usuario"
+	rows, err := db.Query(sql)
+	if err != nil {
+		log.Println("Erro ao executar a instrução SQL:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*User{}
+	for rows.Next() {
+		user := &User{}
+		var vendedorID *int
+		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
+		if err != nil {
+			log.Println("Erro ao escanear linha:", err)
+			return nil, err
+		}
+
+		if vendedorID != nil {
+			Vendedordao, err := vendedor.NewVendedordao()
+			if err != nil {
+				return users, err
+			}
+			vendedor, err := Vendedordao.FindById(*vendedorID)
+			if err != nil {
+				return users, err
+			}
+			user.SetVendedor(vendedor)
+			user.Vendedorid = *vendedorID
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Println("Erro ao iterar sobre os resultados:", err)
+		return nil, err
+	}
+
+	return users, nil
 }
