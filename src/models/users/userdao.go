@@ -20,6 +20,7 @@ type Userdaointerface interface {
 	Seachbyid(int) (*User, error)
 	SeachbyName(string) (*User, error)
 	SeachbyALL() ([]*User, error)
+	GetUserByveid(int) (*User, error)
 }
 type Userdao struct {
 	Conn config.Config
@@ -235,4 +236,44 @@ func (userdao *Userdao) SeachbyALL() ([]*User, error) {
 	}
 
 	return users, nil
+}
+
+func (crud *Userdao) GetUserByveid(id int) (*User, error) {
+	fmt.Println("chega aqui")
+	db := crud.Conn.Getdb()
+	if db == nil {
+		return nil, errors.New("erro ao obter a conexão com o banco de dados")
+	}
+
+	sql := "SELECT id, nome, email, senha, vendedor_id, saldo FROM usuario WHERE vendedor_id = ?"
+	stmt, err := db.Prepare(sql)
+	if err != nil {
+		log.Println("Erro ao preparar a instrução SQL:", err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	user := &User{}
+
+	var vendedorID *int
+
+	err = stmt.QueryRow(id).Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
+	if err != nil {
+		log.Println("Erro ao executar a instrução SQL:", err)
+		return nil, err
+	}
+
+	if vendedorID != nil { // Verifica se o valor não é nulo
+		Vendedordao := vendedor.NewVendedordao(crud.Conn)
+
+		vendedor, err := Vendedordao.FindById(*vendedorID)
+		if err != nil {
+			return user, err
+		}
+		user.SetVendedor(vendedor)
+		user.Vendedorid = user.Vendedor.GetId()
+	}
+	fmt.Println(user)
+	fmt.Println("termina aqui")
+	return user, nil
 }

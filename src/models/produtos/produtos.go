@@ -11,11 +11,12 @@ type Produtos struct {
 	Nome       string
 	Quantidade int
 	vendedor   *users.User
+	VendedorID int
 	Preco      float64
 }
 
 func NewProduto(Nome string, Quantidade int, vendedor *users.User, preco float64) (*Produtos, error) {
-	if Nome != "" || Quantidade != 0 || vendedor != nil {
+	if Nome == "" || Quantidade == 0 || vendedor == nil {
 		return nil, errors.New("nao foi possivel criar um produto")
 	}
 	return &Produtos{

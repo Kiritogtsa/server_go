@@ -13,7 +13,6 @@ import (
 	"github.com/Kiritogtsa/server_go/config"
 	"github.com/Kiritogtsa/server_go/src/models/users"
 	"github.com/Kiritogtsa/server_go/src/models/vendedor"
-
 )
 
 type Usermiddlerinterface interface {
@@ -45,7 +44,7 @@ func (m *Usermiddler) SetRoutesUser(r chi.Router) {
 	r.Get("/", m.Getall)
 	r.Get("/{user_id}", m.Getbyid)
 	r.Put("/", m.Update)
-
+	// r.Post("/login",)
 }
 func (m *Usermiddler) AddUser(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)

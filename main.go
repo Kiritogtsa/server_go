@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/Kiritogtsa/server_go/middlers/middlerprodutos"
 	middlers "github.com/Kiritogtsa/server_go/middlers/middliruser"
 )
 
@@ -81,7 +82,11 @@ func handleMethod(w http.ResponseWriter, r *http.Request) {
 func server() {
 	usermiddler, err := middlers.NewUserMiddler()
 	if err != nil {
-		fmt.Println(" deu algo erro", err)
+		fmt.Println(" deu algum erro no usermiddler", err)
+	}
+	ProdutosMiddler, err := middlerprodutos.NewProdutomiddler()
+	if err != nil {
+		fmt.Println(" deu algum erro no produtomiddler erro", err)
 	}
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -89,6 +94,9 @@ func server() {
 	r.Get("/*", handleMethod)
 	r.Route("/user", func(r chi.Router) {
 		usermiddler.SetRoutesUser(r)
+	})
+	r.Route("/produto", func(r chi.Router) {
+		ProdutosMiddler.SetRoutesProdutos(r)
 	})
 	fmt.Println("servidor roando em http://localhost:8000")
 	err = http.ListenAndServe(":8000", r)
