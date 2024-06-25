@@ -68,12 +68,12 @@ func (m *ProdutosMiddler) Insert(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(produto)
 	user, err := Userdao.GetUserByveid(produto.VendedorID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Erro ao buscar o id do usuario: %v, \n %s", err, user), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Erro ao buscar o id do usuario: %v, \n %v", err, user), http.StatusInternalServerError)
 		return
 	}
 	produto2, err := produtos.NewProduto(produto.Nome, produto.Quantidade, user, produto.Preco)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Erro ao buscar o id do produto: %v, \n %s", err, produto), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Erro ao buscar o id do produto: %v, \n %v", err, produto), http.StatusInternalServerError)
 		return
 	}
 	produto2, err = m.Produtoscrud.Persistir(produto2)
