@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/Kiritogtsa/server_go/src/models"
+	"github.com/Kiritogtsa/server_go/config"
 	"github.com/Kiritogtsa/server_go/src/models/vendedor"
 )
 
@@ -22,20 +22,23 @@ type Userdaointerface interface {
 	SeachbyALL() ([]*User, error)
 }
 type Userdao struct {
-	Conn *models.Conn
+	Conn config.Config
 }
 
 // NewUserdao cria uma nova instância de Userdao.
-func NewUserdao() (Userdaointerface, error) {
-	conn, err := models.NewConn(Dns)
-	if err != nil {
-		return nil, errors.New("erro ao criar a conexão com o banco de dados")
-	}
-	return &Userdao{Conn: conn}, nil
+func NewUserdao(conn config.Config) Userdaointerface {
+	return &Userdao{Conn: conn}
 }
 
 // insert insere um novo usuário no banco de dados.
 func (userdao *Userdao) insert(user *User, is_vendedor string) (*User, error) {
+	var teste int
+	if is_vendedor == "" {
+		teste = 0
+	} else {
+		teste = 1
+	}
+	fmt.Println(is_vendedor)
 	db := userdao.Conn.Getdb()
 	if db == nil {
 		return user, errors.New("erro ao obter a conexão com o banco de dados")
@@ -47,7 +50,7 @@ func (userdao *Userdao) insert(user *User, is_vendedor string) (*User, error) {
 	}
 	user.SetSenha(string(hashsenha))
 
-	sql := "INSERT INTO usuario (nome, email, senha, vendedor, vendedor_id, saldo) VALUES (?, ?, ?, ?, ?, ?)"
+	sql := "INSERT INTO usuario (nome, email, senha, vendedor,vendedor_id, saldo) VALUES (?, ?, ?, ?, ?, ?)"
 	stmt, err := db.Prepare(sql)
 	if err != nil {
 		log.Println("Erro ao preparar a instrução SQL:", err)
@@ -55,13 +58,7 @@ func (userdao *Userdao) insert(user *User, is_vendedor string) (*User, error) {
 	}
 	defer stmt.Close()
 
-	var vendedorID interface{} = nil
-	vendedor := user.GetVendedor()
-	if vendedor != nil {
-		vendedorID = vendedor.GetId()
-	}
-
-	result, err := stmt.Exec(user.GetName(), user.GetEmail(), user.GetSenha(), is_vendedor, vendedorID, user.GetSaldo())
+	result, err := stmt.Exec(user.GetName(), user.GetEmail(), user.GetSenha(), teste, nil, user.GetSaldo())
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return user, err
@@ -148,10 +145,7 @@ func (userdao *Userdao) Seachbyid(id int) (*User, error) {
 		return nil, err
 	}
 	if vendedorID != nil { // Verifica se o valor não é nulo
-		Vendedordao, err := vendedor.NewVendedordao()
-		if err != nil {
-			return user, err
-		}
+		Vendedordao := vendedor.NewVendedordao(userdao.Conn)
 		vendedor, err := Vendedordao.FindById(*vendedorID)
 		if err != nil {
 			return user, err
@@ -185,10 +179,8 @@ func (userdao *Userdao) SeachbyName(name string) (*User, error) {
 	}
 
 	if vendedorID != nil { // Verifica se o valor não é nulo
-		Vendedordao, err := vendedor.NewVendedordao()
-		if err != nil {
-			return user, err
-		}
+		Vendedordao := vendedor.NewVendedordao(userdao.Conn)
+
 		vendedor, err := Vendedordao.FindById(*vendedorID)
 		if err != nil {
 			return user, err
@@ -225,10 +217,8 @@ func (userdao *Userdao) SeachbyALL() ([]*User, error) {
 		}
 
 		if vendedorID != nil {
-			Vendedordao, err := vendedor.NewVendedordao()
-			if err != nil {
-				return users, err
-			}
+			Vendedordao := vendedor.NewVendedordao(userdao.Conn)
+
 			vendedor, err := Vendedordao.FindById(*vendedorID)
 			if err != nil {
 				return users, err

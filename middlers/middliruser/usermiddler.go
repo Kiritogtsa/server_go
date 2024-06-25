@@ -1,26 +1,27 @@
-package middleruser
+package middliruser
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"server_go/src/models"
-	"server_go/src/models/users"
-	"server_go/src/models/vendedor"
 	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-)
 
-const Dns string = "root:1234@tcp(127.0.0.1:3306)/loja"
+	"github.com/Kiritogtsa/server_go/config"
+	"github.com/Kiritogtsa/server_go/src/models/users"
+	"github.com/Kiritogtsa/server_go/src/models/vendedor"
+
+)
 
 type Usermiddlerinterface interface {
 	AddUser(http.ResponseWriter, *http.Request)
 	Getall(http.ResponseWriter, *http.Request)
 	Getbyid(http.ResponseWriter, *http.Request)
 	Update(http.ResponseWriter, *http.Request)
+	SetRoutesUser(chi.Router)
 }
 type Usermiddler struct {
 	Userdao     users.Userdaointerface
@@ -28,7 +29,7 @@ type Usermiddler struct {
 }
 
 func NewUserMiddler() (Usermiddlerinterface, error) {
-	conn, err := models.NewConn(Dns)
+	conn, err := config.NewConn()
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +39,13 @@ func NewUserMiddler() (Usermiddlerinterface, error) {
 		Userdao:     userdao,
 		Vendedordao: vendedor,
 	}, nil
+}
+func (m *Usermiddler) SetRoutesUser(r chi.Router) {
+	r.Post("/", m.AddUser)
+	r.Get("/", m.Getall)
+	r.Get("/{user_id}", m.Getbyid)
+	r.Put("/", m.Update)
+
 }
 func (m *Usermiddler) AddUser(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
@@ -79,15 +87,21 @@ func (m *Usermiddler) AddUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Erro ao criar usuário: %v", err), http.StatusBadRequest)
 		return
 	}
-	user, err = m.Userdao.Persistir(user, "")
+	user, err = m.Userdao.Persistir(user, is_vendedor)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Erro ao persitir usuário: %v", err), http.StatusBadRequest)
 		return
 	}
 	if is_vendedor != "" {
+		fmt.Printf("Usuário: %+v\n", user)
 		vendedor, err := vendedor.Newvendedor(user.ID, 0)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Erro ao criar usuário: %v", err), http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf("Erro ao criar vendedor: %v", err), http.StatusBadRequest)
+			return
+		}
+		vendedor, err = m.Vendedordao.Persist(vendedor)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Erro ao criar vendedor: %v", err), http.StatusBadRequest)
 			return
 		}
 		user.Vendedor = vendedor
@@ -158,17 +172,22 @@ func (m *Usermiddler) Update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Erro ao decodificar JSON", http.StatusBadRequest)
 		return
 	}
-	user_update, err := m.Userdao.Persistir(user)
+	user_update, err := m.Userdao.Persistir(&user, "")
 	if err != nil {
 		http.Error(w, "Erro ao dar update", http.StatusBadRequest)
 		return
 	}
 	json, err := json.Marshal(user_update)
-
+	if err != nil {
+		http.Error(w, fmt.Sprintf("erro ao escrever resposta JSON: %v", err), http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(json)
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(json)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("erro ao escrever resposta JSON: %v", err), http.StatusInternalServerError)
 		return
 	}
+	fmt.Println(json)
 }

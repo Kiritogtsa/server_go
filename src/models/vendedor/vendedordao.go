@@ -3,12 +3,11 @@ package vendedor
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 
-	"github.com/Kiritogtsa/server_go/src/models"
+	"github.com/Kiritogtsa/server_go/config"
 )
-
-const Dns string = "root:1234@tcp(127.0.0.1:3306)/loja"
 
 type Vendedorinterface interface {
 	Persist(*Vendedor) (*Vendedor, error)
@@ -20,19 +19,17 @@ type Vendedorinterface interface {
 }
 
 type Vendedordao struct {
-	Conn *models.Conn
+	Conn config.Config
 }
 
-func NewVendedordao() (Vendedorinterface, error) {
-	conn, err := models.NewConn(Dns)
-	if err != nil {
-		return nil, errors.New("erro ao criar a conexão com o banco de dados")
-	}
-	return &Vendedordao{Conn: conn}, nil
+func NewVendedordao(conn config.Config) Vendedorinterface {
+
+	return &Vendedordao{Conn: conn}
 }
 
 // Insert insere um novo vendedor no banco de dados
 func (coon *Vendedordao) insert(vendedor *Vendedor) (*Vendedor, error) {
+	fmt.Println(vendedor)
 	dao := coon.Conn.Getdb()
 	if dao == nil {
 		return nil, errors.New("erro ao obter a conexão com o banco de dados")
