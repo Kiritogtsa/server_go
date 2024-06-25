@@ -7,7 +7,6 @@ import (
 	"log"
 
 	"github.com/Kiritogtsa/server_go/config"
-	"github.com/Kiritogtsa/server_go/src/models/users"
 )
 
 type Vendedorinterface interface {
@@ -17,7 +16,6 @@ type Vendedorinterface interface {
 	FindById(int) (*Vendedor, error)
 	FindByUserid(int) (*Vendedor, error)
 	Delete(int) error
-	FindUserByid(int) (*users.User, error)
 }
 
 type Vendedordao struct {
@@ -168,7 +166,4 @@ func (coon *Vendedordao) Delete(id int) error {
 	}
 
 	return nil
-}
-func (v *Vendedordao) FindUserByid(Id int) (*users.User, error) {
-	return nil, nil
 }
