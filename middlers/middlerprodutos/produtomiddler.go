@@ -50,6 +50,7 @@ func (m *ProdutosMiddler) SetRoutesProdutos(r chi.Router) {
 	r.Post("/", m.Insert)
 	r.Get("/", m.Getall)
 	r.Get("/{produto_id}", m.Getbyid)
+	r.Post("/{produto_i}", m.Update)
 }
 func (m *ProdutosMiddler) Insert(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
