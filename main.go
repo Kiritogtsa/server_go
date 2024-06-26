@@ -14,8 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/Kiritogtsa/server_go/middlers/middlerprodutos"
-	middlers "github.com/Kiritogtsa/server_go/middlers/middliruser"
+	"github.com/Kiritogtsa/server_go/middlers"
 )
 
 // The serveFile function serves a specified file over HTTP with the appropriate content type based on
@@ -80,23 +79,20 @@ func handleMethod(w http.ResponseWriter, r *http.Request) {
 // }
 
 func server() {
-	main, err := middlers.New()
+	main, err := middlers.Newmainmiddler()
 	if err != nil {
 		fmt.Println(" deu algum erro no usermiddler", err)
-	}
-	ProdutosMiddler, err := middlerprodutos.NewProdutomiddler()
-	if err != nil {
-		fmt.Println(" deu algum erro no produtomiddler erro", err)
 	}
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	//switch routes for mount, in chi at goland
 	r.Get("/*", handleMethod)
 	r.Route("/user", func(r chi.Router) {
-		usermiddler.SetRoutesUser(r)
+		user := main.GetUserMiddler()
+		user.SetRoutesUser(r)
 	})
 	r.Route("/produto", func(r chi.Router) {
-		ProdutosMiddler.SetRoutesProdutos(r)
+		main.GetProdutoMiddler().SetRoutesProdutos(r)
 	})
 	fmt.Println("servidor roando em http://localhost:8000")
 	err = http.ListenAndServe(":8000", r)

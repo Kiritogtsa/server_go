@@ -5,17 +5,17 @@ import (
 	"github.com/Kiritogtsa/server_go/middlers/middliruser"
 )
 
-type mainmiddler interface {
-	GetUserMiddler() *middliruser.Usermiddlerinterface
-	GetProdutoMiddler() *middlerprodutos.ProdutosMiddlerinterface
+type Mainmiddler interface {
+	GetUserMiddler() middliruser.Usermiddlerinterface
+	GetProdutoMiddler() middlerprodutos.ProdutosMiddlerinterface
 }
 
 type Main struct {
-	usermiddler    middliruser.Usermiddlerinterface
-	produtomiddler middlerprodutos.ProdutosMiddlerinterface
+	Usermiddler    middliruser.Usermiddlerinterface
+	Produtomiddler middlerprodutos.ProdutosMiddlerinterface
 }
 
-func New() (mainmiddler, error) {
+func Newmainmiddler() (Mainmiddler, error) {
 	usermiddler, err := middliruser.NewUserMiddler()
 	if err != nil {
 		return nil, err
@@ -25,13 +25,13 @@ func New() (mainmiddler, error) {
 		return nil, err
 	}
 	return &Main{
-		usermiddler:    usermiddler,
-		produtomiddler: produtomiddler,
+		Usermiddler:    usermiddler,
+		Produtomiddler: produtomiddler,
 	}, nil
 }
-func (m *Main) GetProdutoMiddler() *middlerprodutos.ProdutosMiddlerinterface {
-	return &m.produtomiddler
+func (m *Main) GetProdutoMiddler() middlerprodutos.ProdutosMiddlerinterface {
+	return m.Produtomiddler
 }
-func (m *Main) GetUserMiddler() *middliruser.Usermiddlerinterface {
-	return &m.usermiddler
+func (m *Main) GetUserMiddler() middliruser.Usermiddlerinterface {
+	return m.Usermiddler
 }

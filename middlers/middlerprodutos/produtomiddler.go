@@ -26,6 +26,7 @@ type ProdutosMiddlerinterface interface {
 	Getbyid(http.ResponseWriter, *http.Request)
 	Getall(http.ResponseWriter, *http.Request)
 	SetRoutesProdutos(chi.Router)
+	Update(http.ResponseWriter, *http.Request)
 }
 
 type ProdutosMiddler struct {
@@ -112,4 +113,7 @@ func (m *ProdutosMiddler) Getbyid(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(produto)
+}
+func (m *ProdutosMiddler) Update(w http.ResponseWriter, r *http.Request) {
+
 }

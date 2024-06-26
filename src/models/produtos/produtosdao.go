@@ -61,8 +61,27 @@ func (crud *ProdutosCrud) insert(p *Produtos) (*Produtos, error) {
 	return p, nil
 
 }
-func (crud *ProdutosCrud) update(*Produtos) (*Produtos, error) {
-	return nil, nil
+func (crud *ProdutosCrud) update(p *Produtos) (*Produtos, error) {
+	db := crud.Conn.Getdb()
+	if db == nil {
+		return p, errors.New("erro ao obter a conexão com o banco de dados")
+	}
+
+	sql := "update produtos set nome = ?, quant=?, preco=? where id = ?"
+	stmt, err := db.Prepare(sql)
+	if err != nil {
+		log.Println("Erro ao preparar a instrução SQL:", err)
+		return p, err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(p.Nome, p.Quantidade, p.Preco, p.ID)
+	if err != nil {
+		log.Println("Erro ao executar a instrução SQL:", err)
+		return p, err
+	}
+	log.Println("update succes")
+	return p, nil
 }
 func (crud *ProdutosCrud) Persistir(p *Produtos) (*Produtos, error) {
 	if p.ID == 0 {
@@ -99,6 +118,7 @@ func (crud *ProdutosCrud) Getall() ([]*Produtos, error) {
 			return nil, err
 		}
 		p.vendedor = vendedor
+		p.VendedorID = p.vendedor.Vendedorid
 		produtosList = append(produtosList, &p)
 	}
 
@@ -138,6 +158,7 @@ func (crud *ProdutosCrud) Getbyid(id int) (*Produtos, error) {
 		return nil, err
 	}
 	p.vendedor = vendedor
+	p.VendedorID = p.vendedor.Vendedorid
 	return &p, nil
 }
 func (crud *ProdutosCrud) Getbyvendedor(*Produtos) (*users.User, error) {
