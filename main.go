@@ -80,7 +80,7 @@ func handleMethod(w http.ResponseWriter, r *http.Request) {
 // }
 
 func server() {
-	usermiddler, err := middlers.NewUserMiddler()
+	main, err := middlers.New()
 	if err != nil {
 		fmt.Println(" deu algum erro no usermiddler", err)
 	}
