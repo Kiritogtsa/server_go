@@ -21,6 +21,8 @@ type Userdaointerface interface {
 	SeachbyName(string) (*User, error)
 	SeachbyALL() ([]*User, error)
 	GetUserByveid(int) (*User, error)
+	GetUserbyname(string) (*User, error)
+	GetUserbyemail(string) (*User, error)
 }
 type Userdao struct {
 	Conn config.Config
@@ -274,6 +276,81 @@ func (crud *Userdao) GetUserByveid(id int) (*User, error) {
 		user.Vendedorid = user.Vendedor.GetId()
 	}
 	fmt.Println(user)
+	fmt.Println("termina aqui")
+	return user, nil
+}
+
+func (crud *Userdao) GetUserbyemail(email string) (*User, error) {
+	db := crud.Conn.Getdb()
+	if db == nil {
+		return nil, errors.New("erro ao obter a conexão com o banco de dados")
+	}
+
+	sql := "SELECT id, nome, email, senha, vendedor_id, saldo FROM usuario WHERE email = ?"
+	stmt, err := db.Prepare(sql)
+	if err != nil {
+		log.Println("Erro ao preparar a instrução SQL:", err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	user := &User{}
+	var vendedorID *int
+
+	err = stmt.QueryRow(email).Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
+	if err != nil {
+		log.Println("Erro ao executar a instrução SQL:", err)
+		return nil, err
+	}
+
+	if vendedorID != nil { // Verifica se o valor não é nulo
+		Vendedordao := vendedor.NewVendedordao(crud.Conn)
+
+		vendedor, err := Vendedordao.FindById(*vendedorID)
+		if err != nil {
+			return user, err
+		}
+		user.SetVendedor(vendedor)
+		user.Vendedorid = user.Vendedor.GetId()
+	}
+
+	fmt.Println("termina aqui")
+	return user, nil
+}
+func (crud *Userdao) GetUserbyname(name string) (*User, error) {
+	db := crud.Conn.Getdb()
+	if db == nil {
+		return nil, errors.New("erro ao obter a conexão com o banco de dados")
+	}
+
+	sql := "SELECT id, nome, email, senha, vendedor_id, saldo FROM usuario WHERE nome = ?"
+	stmt, err := db.Prepare(sql)
+	if err != nil {
+		log.Println("Erro ao preparar a instrução SQL:", err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	user := &User{}
+	var vendedorID *int
+
+	err = stmt.QueryRow(name).Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
+	if err != nil {
+		log.Println("Erro ao executar a instrução SQL:", err)
+		return nil, err
+	}
+
+	if vendedorID != nil { // Verifica se o valor não é nulo
+		Vendedordao := vendedor.NewVendedordao(crud.Conn)
+
+		vendedor, err := Vendedordao.FindById(*vendedorID)
+		if err != nil {
+			return user, err
+		}
+		user.SetVendedor(vendedor)
+		user.Vendedorid = user.Vendedor.GetId()
+	}
+
 	fmt.Println("termina aqui")
 	return user, nil
 }

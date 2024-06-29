@@ -7,12 +7,12 @@ import (
 )
 
 type Produtos struct {
-	ID         int
-	Nome       string
-	Quantidade int
+	ID         int    `json:"id"`
+	Nome       string `json:"nome"`
+	Quantidade int    `json:"quantidade"`
 	vendedor   *users.User
-	VendedorID int
-	Preco      float64
+	VendedorID int     `json:"vende_id"`
+	Preco      float64 `json:"preço"`
 }
 
 func NewProduto(Nome string, Quantidade int, vendedor *users.User, preco float64) (*Produtos, error) {

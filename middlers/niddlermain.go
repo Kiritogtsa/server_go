@@ -35,3 +35,9 @@ func (m *Main) GetProdutoMiddler() middlerprodutos.ProdutosMiddlerinterface {
 func (m *Main) GetUserMiddler() middliruser.Usermiddlerinterface {
 	return m.Usermiddler
 }
+
+type data struct {
+	nome  string
+	email string
+	senha string
+}

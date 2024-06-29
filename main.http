@@ -1,5 +1,5 @@
 @url = http://localhost:8000/ 
-
+@pid = 1
 
 // metodos do usuario
 GET {{url}}user HTTP/1.1
@@ -11,7 +11,17 @@ Content-Type: application/x-www-form-urlencoded
 
 name=tiago&email=teste&senha=123
 ###
+POST {{url}}loggin HTTP/1.1
+Content-Type: application/json
 
+{
+	"nome":"tiago",
+	"senha":123
+}
+
+
+
+###
 POST {{url}}user HTTP/1.1
 Content-Type: application/x-www-form-urlencoded
 
@@ -31,12 +41,26 @@ POST {{url}}produto HTTP/1.1
 Content-Type: application/json
 
 {
-	"Nome": "Produto 1",
-	"Quantidade": 100,
-	"Preco": 29.99,
-    "VendedorID": 1
+	"nome": "produto 1",
+	"quantidade": 100,
+	"preco": 29.99,
+    "vendedorid": 1
 }
 
 
 ###
 
+GET {{url}}produto/{{pid}} HTTP/1.1
+
+###
+POST {{url}}produto/1 HTTP/1.1
+Content-Type: application/json
+
+{
+	"nome": "produto 2",
+	"quantidade": 100,
+	"preco": 29.99
+}
+###
+
+DELETE {{url}}produto/6 HTTP/1.1

@@ -94,6 +94,7 @@ func server() {
 	r.Route("/produto", func(r chi.Router) {
 		main.GetProdutoMiddler().SetRoutesProdutos(r)
 	})
+	r.Post("/loggin", main.GetUserMiddler().Loggin)
 	fmt.Println("servidor roando em http://localhost:8000")
 	err = http.ListenAndServe(":8000", r)
 	if err != nil {
@@ -104,16 +105,5 @@ func server() {
 // The main function retrieves the current working directory, changes the directory to a specified
 // location, and then calls the server function.
 func main() {
-	cwd, err := os.Getwd()
-	if err != nil {
-		fmt.Println("Erro ao obter o diretório de trabalho atual", err, cwd)
-		return
-	}
-	newDir := os.Getenv("HOME") + "/go_server"
-	err = os.Chdir(newDir)
-	if err != nil {
-		fmt.Println("Erro ao obter o diretório de trabalho atual", err)
-		return
-	}
 	server()
 }

@@ -16,6 +16,7 @@ type Produtosinterface interface {
 	Getall() ([]*Produtos, error)
 	Getbyid(int) (*Produtos, error)
 	Getbyvendedor(*Produtos) (*users.User, error)
+	DeleteProduto(*Produtos) error
 }
 
 type ProdutosCrud struct {
@@ -163,4 +164,25 @@ func (crud *ProdutosCrud) Getbyid(id int) (*Produtos, error) {
 }
 func (crud *ProdutosCrud) Getbyvendedor(*Produtos) (*users.User, error) {
 	return nil, nil
+}
+func (crud *ProdutosCrud) DeleteProduto(p *Produtos) error {
+	if p.ID != 0 {
+		db := crud.Conn.Getdb()
+		if db == nil {
+			return errors.New("nao foi ṕossivel abrir a conexao com o db")
+		}
+		sql := "delete from produtos where id = ?"
+		stmt, err := db.Prepare(sql)
+		if err != nil {
+			return errors.New("erro ao preparar o sql")
+		}
+		result, err := stmt.Query(p.ID)
+		if err != nil {
+			return errors.New("erro ao executar o sql")
+		}
+		fmt.Println(result)
+		return nil
+	} else {
+		return errors.New("nao foi possivel obter o id do produto")
+	}
 }

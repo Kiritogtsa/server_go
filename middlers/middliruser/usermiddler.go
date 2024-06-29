@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/Kiritogtsa/server_go/config"
 	"github.com/Kiritogtsa/server_go/src/models/users"
@@ -21,6 +22,8 @@ type Usermiddlerinterface interface {
 	Getbyid(http.ResponseWriter, *http.Request)
 	Update(http.ResponseWriter, *http.Request)
 	SetRoutesUser(chi.Router)
+
+	Loggin(http.ResponseWriter, *http.Request)
 }
 type Usermiddler struct {
 	Userdao     users.Userdaointerface
@@ -189,4 +192,42 @@ func (m *Usermiddler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println(json)
+}
+
+type data struct {
+	nome  string
+	senha string
+}
+
+func (m *Usermiddler) Loggin(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("emtra aqqui")
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "erro ao obter o corpo", http.StatusBadRequest)
+		return
+	}
+	fmt.Println("emtra aqqui")
+	var data data
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		http.Error(w, "erro ao obtem a data", http.StatusInternalServerError)
+	}
+	fmt.Println("emtra aqqui")
+	fmt.Println(data)
+	if data.nome != "" {
+		fmt.Println("emtra aqqui")
+		user, err := m.Userdao.GetUserbyname(data.nome)
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "erro ao obter o corpo", http.StatusBadRequest)
+			return
+		}
+		err = bcrypt.CompareHashAndPassword([]byte(string(user.Senha)), []byte(string(data.senha)))
+		if err != nil {
+			http.Error(w, "senha errada", http.StatusBadRequest)
+			return
+		}
+		fmt.Println("login ...")
+		w.Write([]byte(string("ok")))
+	}
 }
