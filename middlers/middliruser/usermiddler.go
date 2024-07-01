@@ -42,12 +42,13 @@ func NewUserMiddler() (Usermiddlerinterface, error) {
 		Vendedordao: vendedor,
 	}, nil
 }
-func (m *Usermiddler) SetRoutesUser(r chi.Router) {
+func (m *Usermiddler) SetLogginandcreateroutes(r chi.Router) {
 	r.Post("/", m.AddUser)
+}
+func (m *Usermiddler) SetRoutesUser(r chi.Router) {
 	r.Get("/", m.Getall)
 	r.Get("/{user_id}", m.Getbyid)
 	r.Put("/", m.Update)
-	// r.Post("/login",)
 }
 func (m *Usermiddler) AddUser(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
@@ -195,8 +196,8 @@ func (m *Usermiddler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 type data struct {
-	nome  string
-	senha string
+	Nome  string
+	Senha string
 }
 
 func (m *Usermiddler) Loggin(w http.ResponseWriter, r *http.Request) {
@@ -212,22 +213,21 @@ func (m *Usermiddler) Loggin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "erro ao obtem a data", http.StatusInternalServerError)
 	}
-	fmt.Println("emtra aqqui")
 	fmt.Println(data)
-	if data.nome != "" {
+	if data.Nome != "" {
 		fmt.Println("emtra aqqui")
-		user, err := m.Userdao.GetUserbyname(data.nome)
+		user, err := m.Userdao.GetUserbyname(data.Nome)
 		if err != nil {
 			fmt.Println(err)
 			http.Error(w, "erro ao obter o corpo", http.StatusBadRequest)
 			return
 		}
-		err = bcrypt.CompareHashAndPassword([]byte(string(user.Senha)), []byte(string(data.senha)))
+		err = bcrypt.CompareHashAndPassword([]byte(string(user.Senha)), []byte(string(data.Senha)))
 		if err != nil {
 			http.Error(w, "senha errada", http.StatusBadRequest)
 			return
 		}
 		fmt.Println("login ...")
-		w.Write([]byte(string("ok")))
+		w.Write([]byte(string(http.StatusFound)))
 	}
 }
