@@ -18,14 +18,14 @@ func NewLogginmiddler() Middlerlogginin {
 }
 func (m *Middlerloggin) Autho(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, err := config.Store.Get(r, "session-name")
+		session, err := config.Store.Get(r, "sessao-usuario")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		// Verifica se o usuário está autenticado
-		if session.Values["user"] == nil {
+		if session.Values["sessao-usuario"] == nil {
 			http.Error(w, "Acesso não autorizado", http.StatusUnauthorized)
 			return
 		}

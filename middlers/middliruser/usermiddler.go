@@ -227,7 +227,35 @@ func (m *Usermiddler) Loggin(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "senha errada", http.StatusBadRequest)
 			return
 		}
+		session, err := config.Store.Get(r, "sessao-usuario")
+		if err != nil {
+			http.Error(w, "erro ao criar sessão", http.StatusInternalServerError)
+			return
+		}
+
+		// Defina o usuário na sessão
+		session.Values["sessao-usuario"] = user.ID
+		if user.ID != 0 {
+			session.Values["permisao"] = "vendedor"
+		} else {
+			session.Values["permisao"] = "usuario"
+		}
+		err = session.Save(r, w)
+		if err != nil {
+			http.Error(w, "erro ao salvar sessão", http.StatusInternalServerError)
+			return
+		}
 		fmt.Println("login ...")
-		w.Write([]byte(string(http.StatusFound)))
+		json, err := json.Marshal(session.Values["sessao-usuario"])
+		if err != nil {
+			http.Error(w, fmt.Sprintf("erro ao escrever resposta JSON: %v", err), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, err = w.Write(json)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("erro ao escrever resposta JSON: %v", err), http.StatusInternalServerError)
+			return
+		}
 	}
 }
