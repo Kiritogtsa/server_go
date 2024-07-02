@@ -1,12 +1,8 @@
-// The main function changes the current working directory to a specified location and then starts an
-// HTTP server to serve files and handle POST requests.
 package main
 
-// The `import` statement in Go is used to include packages that provide functionality needed in the
-// program. In this case, the `import` statement is importing the following packages:
 import (
 	"fmt"
-	"io" // Importa o pacote methods
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,8 +14,6 @@ import (
 	"github.com/Kiritogtsa/server_go/middlers/middlerloggin"
 )
 
-// The serveFile function serves a specified file over HTTP with the appropriate content type based on
-// the file extension.
 func serveFile(w http.ResponseWriter, r *http.Request, filename string) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -63,22 +57,6 @@ func handleMethod(w http.ResponseWriter, r *http.Request) {
 	serveFile(w, r, filename)
 }
 
-// func handlepostuser(w http.ResponseWriter, r *http.Request) {
-// 	fmt.Println("Requisição recebida em /user com método:", r.Method)
-
-// 	// Adicionando log para ler e mostrar o corpo da solicitação
-// 	body, err := io.ReadAll(r.Body)
-// 	if err != nil {
-// 		http.Error(w, "Erro ao ler o corpo da solicitação", http.StatusInternalServerError)
-// 		return
-// 	}
-// 	defer r.Body.Close()
-// 	fmt.Println("Corpo da requisição:", string(body))
-
-// 	// Enviar resposta de volta ao cliente
-// 	w.Write([]byte("vem aqui"))
-// }
-
 func server() {
 	main, err := middlers.Newmainmiddler()
 	if err != nil {
@@ -111,8 +89,6 @@ func server() {
 	}
 }
 
-// The main function retrieves the current working directory, changes the directory to a specified
-// location, and then calls the server function.
 func main() {
 	server()
 }
