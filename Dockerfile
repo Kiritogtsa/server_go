@@ -25,10 +25,6 @@ WORKDIR /app
 
 # Copie o executável da etapa de construção
 COPY --from=build /app/app /app/app
-COPY ./src/view /app/src/view
-
-# Exponha a porta que o aplicativo escuta
-EXPOSE 8000
 
 # Defina o diretório de trabalho e o comando de inicialização
 WORKDIR /app

@@ -36,7 +36,7 @@ func NewUserdao(conn config.Config) Userdaointerface {
 // insert insere um novo usuário no banco de dados.
 func (userdao *Userdao) insert(user *User, is_vendedor string) (*User, error) {
 	var teste int
-	if is_vendedor == "" {
+	if is_vendedor == "" || is_vendedor == "0" {
 		teste = 0
 	} else {
 		teste = 1

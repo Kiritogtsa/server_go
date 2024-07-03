@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -58,6 +59,12 @@ func handleMethod(w http.ResponseWriter, r *http.Request) {
 }
 
 func server() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in server function:", r)
+			debug.PrintStack()
+		}
+	}()
 	main, err := middlers.Newmainmiddler()
 	if err != nil {
 		fmt.Println(" deu algum erro no usermiddler", err)

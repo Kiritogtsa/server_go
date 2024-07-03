@@ -95,7 +95,7 @@ func (m *Usermiddler) AddUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Erro ao persitir usuário: %v", err), http.StatusBadRequest)
 		return
 	}
-	if is_vendedor != "" {
+	if is_vendedor != "" && is_vendedor != "0" {
 		fmt.Printf("Usuário: %+v\n", user)
 		vendedor, err := vendedor.Newvendedor(user.ID, 0)
 		if err != nil {
@@ -219,7 +219,7 @@ func (m *Usermiddler) Loggin(w http.ResponseWriter, r *http.Request) {
 		user, err := m.Userdao.GetUserbyname(data.Nome)
 		if err != nil {
 			fmt.Println(err)
-			http.Error(w, "erro ao obter o corpo", http.StatusBadRequest)
+			http.Error(w, "nao existe esse usuario", http.StatusBadRequest)
 			return
 		}
 		err = bcrypt.CompareHashAndPassword([]byte(string(user.Senha)), []byte(string(data.Senha)))
@@ -232,9 +232,14 @@ func (m *Usermiddler) Loggin(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "erro ao criar sessão", http.StatusInternalServerError)
 			return
 		}
+		userdata, err := json.Marshal(user)
+		if err != nil {
+			http.Error(w, "erro ao criar o json", http.StatusInternalServerError)
 
+			return
+		}
 		// Defina o usuário na sessão
-		session.Values["sessao-usuario"] = user.ID
+		session.Values["sessao-usuario"] = userdata
 		if user.ID != 0 {
 			session.Values["permisao"] = "vendedor"
 		} else {
