@@ -1,5 +1,5 @@
 .vscode
 *.exe
 vendor
-./bin
-./db-data
+bin
+db-data
