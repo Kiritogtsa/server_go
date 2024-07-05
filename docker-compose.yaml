@@ -26,4 +26,3 @@ services:
       - DB_HOST=db
       - DB_USER=root
       - DB_PASSWORD=1234
-
