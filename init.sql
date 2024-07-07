@@ -29,7 +29,7 @@ SET time_zone = "+00:00";
 CREATE DATABASE IF NOT EXISTS `loja`;
 USE `loja`;
 
-
+a
 CREATE TABLE `produtos` (
   `id` int(11) NOT NULL,
   `nome` varchar(15) NOT NULL,

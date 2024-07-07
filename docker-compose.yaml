@@ -22,7 +22,5 @@ services:
       - db
     volumes:
       - ./src/view:/app/src/view
-    environment:
-      - DB_HOST=db
-      - DB_USER=root
-      - DB_PASSWORD=1234
+volumes:
+  db-data:
