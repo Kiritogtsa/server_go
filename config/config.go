@@ -21,9 +21,7 @@ const (
 	pingInterval = 5 * time.Second
 )
 
-var (
-	Store = sessions.NewCookieStore([]byte("t0p-s3cr3t"))
-)
+var Store = sessions.NewCookieStore([]byte("t0p-s3cr3t"))
 
 type Config interface {
 	Getdb() *sql.DB
@@ -54,6 +52,7 @@ func NewConn() (Config, error) {
 
 	return &Conn{DB: db}, nil
 }
+
 func waitForDB(db *sql.DB) {
 	deadline := time.Now().Add(maxWaitTime)
 

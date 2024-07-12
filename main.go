@@ -18,7 +18,11 @@ import (
 func serveFile(w http.ResponseWriter, r *http.Request, filename string) {
 	file, err := os.Open(filename)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Erro ao abrir o arquivo %s: %v", filename, err), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("Erro ao abrir o arquivo %s: %v", filename, err),
+			http.StatusInternalServerError,
+		)
 		return
 
 	}
@@ -42,7 +46,11 @@ func serveFile(w http.ResponseWriter, r *http.Request, filename string) {
 
 	_, err = io.Copy(w, file)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Erro ao enviar conteúdo do arquivo %s: %v", filename, err), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("Erro ao enviar conteúdo do arquivo %s: %v", filename, err),
+			http.StatusInternalServerError,
+		)
 	}
 }
 
@@ -71,7 +79,7 @@ func server() {
 	}
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	//switch routes for mount, in chi at goland
+	// switch routes for mount, in chi at goland
 	r.Get("/*", handleMethod)
 	r.Group(func(r chi.Router) {
 		r.Route("/user", func(r chi.Router) {
