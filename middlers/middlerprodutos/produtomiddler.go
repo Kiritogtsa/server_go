@@ -54,6 +54,7 @@ func (m *ProdutosMiddler) SetRoutesProdutos(r chi.Router) {
 	r.Post("/{produto_id}", m.Update)
 	r.Delete("/{produto_id}", m.Delete)
 }
+
 func (m *ProdutosMiddler) Insert(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -68,21 +69,48 @@ func (m *ProdutosMiddler) Insert(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Erro ao decodificar JSON", http.StatusBadRequest)
 		return
 	}
-	Userdao := users.NewUserdao(m.conn)
-	fmt.Println(produto)
-	user, err := Userdao.GetUserByveid(produto.VendedorID)
+	sessao, err := config.Store.Get(r, "sessao-usuario")
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Erro ao buscar o id do usuario: %v, \n %v", err, user), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("Erro ao obter a sessao: %v, \n %v", err, sessao),
+			http.StatusInternalServerError,
+		)
 		return
 	}
-	produto2, err := produtos.NewProduto(produto.Nome, produto.Quantidade, user, produto.Preco)
+	userData, ok := sessao.Values["sessao-usuario"].([]byte)
+	if !ok {
+		http.Error(w, "Usuário não encontrado na sessão", http.StatusNotFound)
+		return
+	}
+
+	var user users.User
+	err = json.Unmarshal(userData, &user)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Erro ao buscar o id do produto: %v, \n %v", err, produto), http.StatusInternalServerError)
+		http.Error(w, "Erro ao desserializar usuário", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(user)
+	if user.Vendedor == nil {
+		http.Error(w, " usuário nao autorilizado", http.StatusInternalServerError)
+		return
+	}
+	produto2, err := produtos.NewProduto(produto.Nome, produto.Quantidade, &user, produto.Preco)
+	if err != nil {
+		http.Error(
+			w,
+			fmt.Sprintf("Erro ao buscar o id do produto: %v, \n %v", err, produto),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 	produto2, err = m.Produtoscrud.Persistir(produto2)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Erro ao persistir produto: %v", err), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("Erro ao persistir produto: %v", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 
@@ -90,16 +118,22 @@ func (m *ProdutosMiddler) Insert(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(produto2)
 }
+
 func (m *ProdutosMiddler) Getall(w http.ResponseWriter, r *http.Request) {
 	produtoslist, err := m.Produtoscrud.Getall()
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Erro ao buscar todos os produtos: %v", err), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("Erro ao buscar todos os produtos: %v", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(produtoslist)
 }
+
 func (m *ProdutosMiddler) Getbyid(w http.ResponseWriter, r *http.Request) {
 	param := chi.URLParam(r, "produto_id")
 	produto_id, err := strconv.Atoi(param)
@@ -117,7 +151,9 @@ func (m *ProdutosMiddler) Getbyid(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(produto)
 }
+
 func (m *ProdutosMiddler) Update(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("vem aqui")
 	pr := chi.URLParam(r, "produto_id")
 	pi, err := strconv.Atoi(pr)
 	if err != nil {
@@ -135,14 +171,40 @@ func (m *ProdutosMiddler) Update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Erro ao ler o corpo da solicitação", http.StatusInternalServerError)
 		return
 	}
+	sessao, err := config.Store.Get(r, "sessao-usuario")
+	if err != nil {
+		http.Error(
+			w,
+			fmt.Sprintf("Erro ao obter a sessao: %v, \n %v", err, sessao),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+	userData, ok := sessao.Values["sessao-usuario"].([]byte)
+	if !ok {
+		http.Error(w, "Usuário não encontrado na sessão", http.StatusNotFound)
+		return
+	}
+
+	var user users.User
+	err = json.Unmarshal(userData, &user)
+	if err != nil {
+		http.Error(w, "Erro ao desserializar usuário", http.StatusInternalServerError)
+		return
+	}
 	p := produtos.Produtos{
 		ID:         pi,
 		Nome:       produto.Nome,
 		Quantidade: produto.Quantidade,
 		Preco:      produto.Preco,
 	}
+	produtoc, err := m.Produtoscrud.Getbyid(p.ID)
 	if err != nil {
-		http.Error(w, "erro ao criar o objeto", http.StatusInternalServerError)
+		http.Error(w, "erro ao buscar o produto original", http.StatusInternalServerError)
+		return
+	}
+	if produtoc.VendedorID != user.Vendedorid {
+		http.Error(w, "nao eo vendedor do produto", http.StatusInternalServerError)
 		return
 	}
 	pd, err := m.Produtoscrud.Persistir(&p)
@@ -154,6 +216,7 @@ func (m *ProdutosMiddler) Update(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(p)
 }
+
 func (m *ProdutosMiddler) Delete(w http.ResponseWriter, r *http.Request) {
 	param := chi.URLParam(r, "produto_id")
 	pri, err := strconv.Atoi(param)

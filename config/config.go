@@ -43,6 +43,7 @@ func (db *Conn) GetStore() *sessions.CookieStore {
 func NewConn() (Config, error) {
 	// Cria uma conexão com o banco de dados.
 	dbURI := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPassword, dbHost, dbPort, dbName)
+	fmt.Println(dbURI)
 	db, err := sql.Open(dbDriver, dbURI)
 	if err != nil {
 		log.Fatalf("Erro ao conectar ao banco de dados: %v", err)

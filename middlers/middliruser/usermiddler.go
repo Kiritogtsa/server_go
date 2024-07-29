@@ -42,14 +42,17 @@ func NewUserMiddler() (Usermiddlerinterface, error) {
 		Vendedordao: vendedor,
 	}, nil
 }
+
 func (m *Usermiddler) SetLogginandcreateroutes(r chi.Router) {
 	r.Post("/", m.AddUser)
 }
+
 func (m *Usermiddler) SetRoutesUser(r chi.Router) {
 	r.Get("/", m.Getall)
 	r.Get("/{user_id}", m.Getbyid)
 	r.Put("/", m.Update)
 }
+
 func (m *Usermiddler) AddUser(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -62,7 +65,7 @@ func (m *Usermiddler) AddUser(w http.ResponseWriter, r *http.Request) {
 	lines := strings.Split(bodyStr, "&")
 
 	var nome, email, senha, is_vendedor string
-	//var is_vendedor bool
+	// var is_vendedor bool
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
@@ -110,27 +113,42 @@ func (m *Usermiddler) AddUser(w http.ResponseWriter, r *http.Request) {
 		user.Vendedor = vendedor
 		user, err = m.Userdao.Persistir(user, "")
 		if err != nil {
-			http.Error(w, fmt.Sprintf("erro ao setar o id do vendedor: %v", err), http.StatusBadRequest)
+			http.Error(
+				w,
+				fmt.Sprintf("erro ao setar o id do vendedor: %v", err),
+				http.StatusBadRequest,
+			)
 			return
 		}
 	}
 	fmt.Printf("Usuário criado: %+v\n", user)
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte(fmt.Sprintf("Usuário criado com sucesso: %s (%s)\n", user.GetName(), user.GetEmail())))
+	w.Write(
+		[]byte(
+			fmt.Sprintf("Usuário criado com sucesso: %s (%s)\n", user.GetName(), user.GetEmail()),
+		),
+	)
 }
 
 func (m *Usermiddler) Getall(w http.ResponseWriter, r *http.Request) {
-
 	// Chama o método SeachAll() para buscar todos os usuários
 	userslist, err := m.Userdao.SeachbyALL()
 	if err != nil {
-		http.Error(w, fmt.Sprintf("erro ao buscar todos os usuários: %v", err), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("erro ao buscar todos os usuários: %v", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 	// Serializa os usuários para JSON
 	usersJSON, err := json.Marshal(userslist)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("erro ao serializar usuários para JSON: %v", err), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("erro ao serializar usuários para JSON: %v", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 	// Define o cabeçalho Content-Type para JSON
@@ -138,10 +156,15 @@ func (m *Usermiddler) Getall(w http.ResponseWriter, r *http.Request) {
 	// Escreve a resposta HTTP com os usuários serializados em JSON
 	_, err = w.Write(usersJSON)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("erro ao escrever resposta JSON: %v", err), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("erro ao escrever resposta JSON: %v", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 }
+
 func (m *Usermiddler) Getbyid(w http.ResponseWriter, r *http.Request) {
 	param := chi.URLParam(r, "user_id")
 	user_id, err := strconv.Atoi(param)
@@ -163,6 +186,7 @@ func (m *Usermiddler) Getbyid(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(json)
 }
+
 func (m *Usermiddler) Update(w http.ResponseWriter, r *http.Request) {
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
@@ -182,14 +206,22 @@ func (m *Usermiddler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	json, err := json.Marshal(user_update)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("erro ao escrever resposta JSON: %v", err), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("erro ao escrever resposta JSON: %v", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 	fmt.Println(json)
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(json)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("erro ao escrever resposta JSON: %v", err), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("erro ao escrever resposta JSON: %v", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 	fmt.Println(json)
@@ -201,13 +233,11 @@ type data struct {
 }
 
 func (m *Usermiddler) Loggin(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("emtra aqqui")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "erro ao obter o corpo", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("emtra aqqui")
 	var data data
 	err = json.Unmarshal(body, &data)
 	if err != nil {
@@ -215,13 +245,13 @@ func (m *Usermiddler) Loggin(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println(data)
 	if data.Nome != "" {
-		fmt.Println("emtra aqqui")
 		user, err := m.Userdao.GetUserbyname(data.Nome)
 		if err != nil {
 			fmt.Println(err)
 			http.Error(w, "nao existe esse usuario", http.StatusBadRequest)
 			return
 		}
+		fmt.Println(user)
 		err = bcrypt.CompareHashAndPassword([]byte(string(user.Senha)), []byte(string(data.Senha)))
 		if err != nil {
 			http.Error(w, "senha errada", http.StatusBadRequest)
@@ -235,7 +265,6 @@ func (m *Usermiddler) Loggin(w http.ResponseWriter, r *http.Request) {
 		userdata, err := json.Marshal(user)
 		if err != nil {
 			http.Error(w, "erro ao criar o json", http.StatusInternalServerError)
-
 			return
 		}
 		// Defina o usuário na sessão
@@ -253,13 +282,21 @@ func (m *Usermiddler) Loggin(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("login ...")
 		json, err := json.Marshal(session.Values["sessao-usuario"])
 		if err != nil {
-			http.Error(w, fmt.Sprintf("erro ao escrever resposta JSON: %v", err), http.StatusInternalServerError)
+			http.Error(
+				w,
+				fmt.Sprintf("erro ao escrever resposta JSON: %v", err),
+				http.StatusInternalServerError,
+			)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(json)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("erro ao escrever resposta JSON: %v", err), http.StatusInternalServerError)
+			http.Error(
+				w,
+				fmt.Sprintf("erro ao escrever resposta JSON: %v", err),
+				http.StatusInternalServerError,
+			)
 			return
 		}
 	}

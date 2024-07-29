@@ -11,7 +11,7 @@ type User struct {
 	Name       string             `json:"name"`
 	Email      string             `json:"email"`
 	Senha      string             `json:"-"`
-	Vendedor   *vendedor.Vendedor `json:"-"`
+	Vendedor   *vendedor.Vendedor `json:"vendedor"`
 	Vendedorid int                `json:"vendedorid"`
 	Saldo      float64            `json:"saldo"`
 }
