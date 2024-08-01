@@ -1,22 +1,21 @@
-package users
+package domain
 
 import (
 	"errors"
-
-	"github.com/Kiritogtsa/server_go/src/models/vendedor"
 )
 
 type User struct {
-	ID         int                `json:"id"`
-	Name       string             `json:"name"`
-	Email      string             `json:"email"`
-	Senha      string             `json:"-"`
-	Vendedor   *vendedor.Vendedor `json:"vendedor"`
-	Vendedorid int                `json:"vendedorid"`
-	Saldo      float64            `json:"saldo"`
+	ID         int       `json:"id"`
+	Name       string    `json:"name"`
+	Email      string    `json:"email"`
+	Senha      string    `json:"-"`
+	Vendedor   *Vendedor `json:"vendedor"`
+	Vendedorid int       `json:"vendedorid"`
+	Saldo      float64   `json:"saldo"`
+	Produtos   []Produtos
 }
 
-func NewUser(nome string, email string, senha string, vendedor *vendedor.Vendedor) (*User, error) {
+func NewUser(nome string, email string, senha string, vendedor *Vendedor) (*User, error) {
 	if nome == "" || email == "" || senha == "" {
 		return nil, errors.New("faltando uma variável (nome, email ou senha)")
 	}
@@ -28,11 +27,11 @@ func NewUser(nome string, email string, senha string, vendedor *vendedor.Vendedo
 	}, nil
 }
 
-func (user *User) GetVendedor() *vendedor.Vendedor {
+func (user *User) GetVendedor() *Vendedor {
 	return user.Vendedor
 }
 
-func (user *User) SetVendedor(vendedor *vendedor.Vendedor) {
+func (user *User) SetVendedor(vendedor *Vendedor) {
 	user.Vendedor = vendedor
 }
 

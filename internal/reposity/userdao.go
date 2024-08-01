@@ -1,4 +1,4 @@
-package users
+package reposity
 
 import (
 	"errors"
@@ -8,21 +8,21 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/Kiritogtsa/server_go/config"
-	"github.com/Kiritogtsa/server_go/src/models/vendedor"
+	"github.com/Kiritogtsa/server_go/internal/domain"
 )
 
 const Dns string = "root:1234@tcp(127.0.0.1:3306)/loja"
 
 type Userdaointerface interface {
-	insert(*User, string) (*User, error)
-	update(*User) (*User, error)
-	Persistir(*User, string) (*User, error)
-	Seachbyid(int) (*User, error)
-	SeachbyName(string) (*User, error)
-	SeachbyALL() ([]*User, error)
-	GetUserByveid(int) (*User, error)
-	GetUserbyname(string) (*User, error)
-	GetUserbyemail(string) (*User, error)
+	insert(*domain.User, string) (*domain.User, error)
+	update(*domain.User) (*domain.User, error)
+	Persistir(*domain.User, string) (*domain.User, error)
+	Seachbyid(int) (*domain.User, error)
+	SeachbyName(string) (*domain.User, error)
+	SeachbyALL() ([]*domain.User, error)
+	GetUserByveid(int) (*domain.User, error)
+	GetUserbyname(string) (*domain.User, error)
+	GetUserbyemail(string) (*domain.User, error)
 }
 type Userdao struct {
 	Conn config.Config
@@ -34,7 +34,7 @@ func NewUserdao(conn config.Config) Userdaointerface {
 }
 
 // insert insere um novo usuário no banco de dados.
-func (userdao *Userdao) insert(user *User, is_vendedor string) (*User, error) {
+func (userdao *Userdao) insert(user *domain.User, is_vendedor string) (*domain.User, error) {
 	var teste int
 	if is_vendedor == "" || is_vendedor == "0" {
 		teste = 0
@@ -61,7 +61,14 @@ func (userdao *Userdao) insert(user *User, is_vendedor string) (*User, error) {
 	}
 	defer stmt.Close()
 
-	result, err := stmt.Exec(user.GetName(), user.GetEmail(), user.GetSenha(), teste, nil, user.GetSaldo())
+	result, err := stmt.Exec(
+		user.GetName(),
+		user.GetEmail(),
+		user.GetSenha(),
+		teste,
+		nil,
+		user.GetSaldo(),
+	)
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return user, err
@@ -83,7 +90,7 @@ func (userdao *Userdao) insert(user *User, is_vendedor string) (*User, error) {
 }
 
 // update atualiza um usuário existente no banco de dados.
-func (userdao *Userdao) update(user *User) (*User, error) {
+func (userdao *Userdao) update(user *domain.User) (*domain.User, error) {
 	db := userdao.Conn.Getdb()
 	if db == nil {
 		return nil, errors.New("erro ao obter a conexão com o banco de dados")
@@ -93,7 +100,7 @@ func (userdao *Userdao) update(user *User) (*User, error) {
 	var vendedorID interface{} = nil
 	vendedor := user.GetVendedor()
 	if vendedor != nil {
-		vendedorID = vendedor.GetId()
+		vendedorID = vendedor.ID
 	}
 	fmt.Println("aqui update usuarui")
 
@@ -106,7 +113,14 @@ func (userdao *Userdao) update(user *User) (*User, error) {
 	}
 	fmt.Println("aqui update depois")
 
-	_, err = stmt.Exec(user.GetName(), user.GetEmail(), user.GetSenha(), vendedorID, user.GetSaldo(), user.GetID())
+	_, err = stmt.Exec(
+		user.GetName(),
+		user.GetEmail(),
+		user.GetSenha(),
+		vendedorID,
+		user.GetSaldo(),
+		user.GetID(),
+	)
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return nil, err
@@ -117,7 +131,7 @@ func (userdao *Userdao) update(user *User) (*User, error) {
 }
 
 // Persistir insere ou atualiza o usuário no banco de dados.
-func (userdao *Userdao) Persistir(user *User, is_vendedor string) (*User, error) {
+func (userdao *Userdao) Persistir(user *domain.User, is_vendedor string) (*domain.User, error) {
 	if user.GetID() == 0 {
 		return userdao.insert(user, is_vendedor)
 	}
@@ -125,7 +139,7 @@ func (userdao *Userdao) Persistir(user *User, is_vendedor string) (*User, error)
 }
 
 // Seachbyid busca um usuário pelo ID no banco de dados.
-func (userdao *Userdao) Seachbyid(id int) (*User, error) {
+func (userdao *Userdao) Seachbyid(id int) (*domain.User, error) {
 	db := userdao.Conn.Getdb()
 	if db == nil {
 		return nil, errors.New("erro ao obter a conexão com o banco de dados")
@@ -139,16 +153,17 @@ func (userdao *Userdao) Seachbyid(id int) (*User, error) {
 	}
 	defer stmt.Close()
 
-	user := &User{}
+	user := &domain.User{}
 	var vendedorID *int
 
-	err = stmt.QueryRow(id).Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
+	err = stmt.QueryRow(id).
+		Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return nil, err
 	}
 	if vendedorID != nil { // Verifica se o valor não é nulo
-		Vendedordao := vendedor.NewVendedordao(userdao.Conn)
+		Vendedordao := NewVendedordao(userdao.Conn)
 		vendedor, err := Vendedordao.FindById(*vendedorID)
 		if err != nil {
 			return user, err
@@ -157,7 +172,8 @@ func (userdao *Userdao) Seachbyid(id int) (*User, error) {
 	}
 	return user, nil
 }
-func (userdao *Userdao) SeachbyName(name string) (*User, error) {
+
+func (userdao *Userdao) SeachbyName(name string) (*domain.User, error) {
 	db := userdao.Conn.Getdb()
 	if db == nil {
 		return nil, errors.New("erro ao obter a conexão com o banco de dados")
@@ -171,18 +187,19 @@ func (userdao *Userdao) SeachbyName(name string) (*User, error) {
 	}
 	defer stmt.Close()
 
-	user := &User{}
+	user := &domain.User{}
 
 	var vendedorID *int
 
-	err = stmt.QueryRow(name).Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
+	err = stmt.QueryRow(name).
+		Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return nil, err
 	}
 
 	if vendedorID != nil { // Verifica se o valor não é nulo
-		Vendedordao := vendedor.NewVendedordao(userdao.Conn)
+		Vendedordao := NewVendedordao(userdao.Conn)
 
 		vendedor, err := Vendedordao.FindById(*vendedorID)
 		if err != nil {
@@ -195,7 +212,7 @@ func (userdao *Userdao) SeachbyName(name string) (*User, error) {
 }
 
 // SeachAll busca todos os usuários no banco de dados.
-func (userdao *Userdao) SeachbyALL() ([]*User, error) {
+func (userdao *Userdao) SeachbyALL() ([]*domain.User, error) {
 	db := userdao.Conn.Getdb()
 	if db == nil {
 		return nil, errors.New("erro ao obter a conexão com o banco de dados")
@@ -209,9 +226,9 @@ func (userdao *Userdao) SeachbyALL() ([]*User, error) {
 	}
 	defer rows.Close()
 
-	users := []*User{}
+	users := []*domain.User{}
 	for rows.Next() {
-		user := &User{}
+		user := &domain.User{}
 		var vendedorID *int
 		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
 		if err != nil {
@@ -220,7 +237,7 @@ func (userdao *Userdao) SeachbyALL() ([]*User, error) {
 		}
 
 		if vendedorID != nil {
-			Vendedordao := vendedor.NewVendedordao(userdao.Conn)
+			Vendedordao := NewVendedordao(userdao.Conn)
 
 			vendedor, err := Vendedordao.FindById(*vendedorID)
 			if err != nil {
@@ -240,7 +257,7 @@ func (userdao *Userdao) SeachbyALL() ([]*User, error) {
 	return users, nil
 }
 
-func (crud *Userdao) GetUserByveid(id int) (*User, error) {
+func (crud *Userdao) GetUserByveid(id int) (*domain.User, error) {
 	fmt.Println("chega aqui")
 	db := crud.Conn.Getdb()
 	if db == nil {
@@ -255,32 +272,33 @@ func (crud *Userdao) GetUserByveid(id int) (*User, error) {
 	}
 	defer stmt.Close()
 
-	user := &User{}
+	user := &domain.User{}
 
 	var vendedorID *int
 
-	err = stmt.QueryRow(id).Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
+	err = stmt.QueryRow(id).
+		Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return nil, err
 	}
 
 	if vendedorID != nil { // Verifica se o valor não é nulo
-		Vendedordao := vendedor.NewVendedordao(crud.Conn)
+		Vendedordao := NewVendedordao(crud.Conn)
 
 		vendedor, err := Vendedordao.FindById(*vendedorID)
 		if err != nil {
 			return user, err
 		}
 		user.SetVendedor(vendedor)
-		user.Vendedorid = user.Vendedor.GetId()
+		user.Vendedorid = user.Vendedor.ID
 	}
 	fmt.Println(user)
 	fmt.Println("termina aqui")
 	return user, nil
 }
 
-func (crud *Userdao) GetUserbyemail(email string) (*User, error) {
+func (crud *Userdao) GetUserbyemail(email string) (*domain.User, error) {
 	db := crud.Conn.Getdb()
 	if db == nil {
 		return nil, errors.New("erro ao obter a conexão com o banco de dados")
@@ -294,30 +312,32 @@ func (crud *Userdao) GetUserbyemail(email string) (*User, error) {
 	}
 	defer stmt.Close()
 
-	user := &User{}
+	user := &domain.User{}
 	var vendedorID *int
 
-	err = stmt.QueryRow(email).Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
+	err = stmt.QueryRow(email).
+		Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return nil, err
 	}
 
 	if vendedorID != nil { // Verifica se o valor não é nulo
-		Vendedordao := vendedor.NewVendedordao(crud.Conn)
+		Vendedordao := NewVendedordao(crud.Conn)
 
 		vendedor, err := Vendedordao.FindById(*vendedorID)
 		if err != nil {
 			return user, err
 		}
 		user.SetVendedor(vendedor)
-		user.Vendedorid = user.Vendedor.GetId()
+		user.Vendedorid = user.Vendedor.ID
 	}
 
 	fmt.Println("termina aqui")
 	return user, nil
 }
-func (crud *Userdao) GetUserbyname(name string) (*User, error) {
+
+func (crud *Userdao) GetUserbyname(name string) (*domain.User, error) {
 	db := crud.Conn.Getdb()
 	if db == nil {
 		return nil, errors.New("erro ao obter a conexão com o banco de dados")
@@ -331,24 +351,25 @@ func (crud *Userdao) GetUserbyname(name string) (*User, error) {
 	}
 	defer stmt.Close()
 
-	user := &User{}
+	user := &domain.User{}
 	var vendedorID *int
 
-	err = stmt.QueryRow(name).Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
+	err = stmt.QueryRow(name).
+		Scan(&user.ID, &user.Name, &user.Email, &user.Senha, &vendedorID, &user.Saldo)
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return nil, err
 	}
 
 	if vendedorID != nil { // Verifica se o valor não é nulo
-		Vendedordao := vendedor.NewVendedordao(crud.Conn)
+		Vendedordao := NewVendedordao(crud.Conn)
 
 		vendedor, err := Vendedordao.FindById(*vendedorID)
 		if err != nil {
 			return user, err
 		}
 		user.SetVendedor(vendedor)
-		user.Vendedorid = user.Vendedor.GetId()
+		user.Vendedorid = user.Vendedor.ID
 	}
 
 	fmt.Println("termina aqui")

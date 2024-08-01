@@ -29,15 +29,17 @@ func Newmainmiddler() (Mainmiddler, error) {
 		Produtomiddler: produtomiddler,
 	}, nil
 }
+
 func (m *Main) GetProdutoMiddler() middlerprodutos.ProdutosMiddlerinterface {
 	return m.Produtomiddler
 }
+
 func (m *Main) GetUserMiddler() middliruser.Usermiddlerinterface {
 	return m.Usermiddler
 }
 
-type data struct {
-	nome  string
-	email string
-	senha string
-}
+// type data struct {
+// 	nome  string
+// 	email string
+// 	senha string
+// }

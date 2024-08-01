@@ -12,8 +12,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/Kiritogtsa/server_go/config"
-	"github.com/Kiritogtsa/server_go/src/models/users"
-	"github.com/Kiritogtsa/server_go/src/models/vendedor"
+	"github.com/Kiritogtsa/server_go/internal/domain"
+	"github.com/Kiritogtsa/server_go/internal/reposity"
 )
 
 type Usermiddlerinterface interface {
@@ -22,12 +22,11 @@ type Usermiddlerinterface interface {
 	Getbyid(http.ResponseWriter, *http.Request)
 	Update(http.ResponseWriter, *http.Request)
 	SetRoutesUser(chi.Router)
-
 	Loggin(http.ResponseWriter, *http.Request)
 }
 type Usermiddler struct {
-	Userdao     users.Userdaointerface
-	Vendedordao vendedor.Vendedorinterface
+	Userdao     reposity.Userdaointerface
+	Vendedordao reposity.Vendedorinterface
 }
 
 func NewUserMiddler() (Usermiddlerinterface, error) {
@@ -35,8 +34,8 @@ func NewUserMiddler() (Usermiddlerinterface, error) {
 	if err != nil {
 		return nil, err
 	}
-	userdao := users.NewUserdao(conn)
-	vendedor := vendedor.NewVendedordao(conn)
+	userdao := reposity.NewUserdao(conn)
+	vendedor := reposity.NewVendedordao(conn)
 	return &Usermiddler{
 		Userdao:     userdao,
 		Vendedordao: vendedor,
@@ -88,7 +87,7 @@ func (m *Usermiddler) AddUser(w http.ResponseWriter, r *http.Request) {
 			is_vendedor = value
 		}
 	}
-	user, err := users.NewUser(nome, email, senha, nil)
+	user, err := domain.NewUser(nome, email, senha, nil)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Erro ao criar usuário: %v", err), http.StatusBadRequest)
 		return
@@ -100,7 +99,7 @@ func (m *Usermiddler) AddUser(w http.ResponseWriter, r *http.Request) {
 	}
 	if is_vendedor != "" && is_vendedor != "0" {
 		fmt.Printf("Usuário: %+v\n", user)
-		vendedor, err := vendedor.Newvendedor(user.ID, 0)
+		vendedor, err := domain.Newvendedor(user.ID, 0)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Erro ao criar vendedor: %v", err), http.StatusBadRequest)
 			return
@@ -193,7 +192,7 @@ func (m *Usermiddler) Update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Content-Type deve ser application/json", http.StatusUnsupportedMediaType)
 		return
 	}
-	var user users.User
+	var user domain.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		http.Error(w, "Erro ao decodificar JSON", http.StatusBadRequest)

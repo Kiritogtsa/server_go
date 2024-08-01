@@ -1,4 +1,4 @@
-package vendedor
+package reposity
 
 import (
 	"database/sql"
@@ -7,14 +7,15 @@ import (
 	"log"
 
 	"github.com/Kiritogtsa/server_go/config"
+	"github.com/Kiritogtsa/server_go/internal/domain"
 )
 
 type Vendedorinterface interface {
-	Persist(*Vendedor) (*Vendedor, error)
-	insert(*Vendedor) (*Vendedor, error)
-	update(*Vendedor) (*Vendedor, error)
-	FindById(int) (*Vendedor, error)
-	FindByUserid(int) (*Vendedor, error)
+	Persist(*domain.Vendedor) (*domain.Vendedor, error)
+	insert(*domain.Vendedor) (*domain.Vendedor, error)
+	update(*domain.Vendedor) (*domain.Vendedor, error)
+	FindById(int) (*domain.Vendedor, error)
+	FindByUserid(int) (*domain.Vendedor, error)
 	Delete(int) error
 }
 
@@ -23,12 +24,11 @@ type Vendedordao struct {
 }
 
 func NewVendedordao(conn config.Config) Vendedorinterface {
-
 	return &Vendedordao{Conn: conn}
 }
 
 // Insert insere um novo vendedor no banco de dados
-func (coon *Vendedordao) insert(vendedor *Vendedor) (*Vendedor, error) {
+func (coon *Vendedordao) insert(vendedor *domain.Vendedor) (*domain.Vendedor, error) {
 	fmt.Println(vendedor)
 	dao := coon.Conn.Getdb()
 	if dao == nil {
@@ -42,7 +42,7 @@ func (coon *Vendedordao) insert(vendedor *Vendedor) (*Vendedor, error) {
 	}
 	defer stmt.Close()
 
-	result, err := stmt.Exec(vendedor.GetuserId(), vendedor.Getquant())
+	result, err := stmt.Exec(vendedor.User, vendedor.Produtos)
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return nil, err
@@ -59,7 +59,7 @@ func (coon *Vendedordao) insert(vendedor *Vendedor) (*Vendedor, error) {
 }
 
 // Update atualiza um vendedor existente no banco de dados
-func (conn *Vendedordao) update(vendedor *Vendedor) (*Vendedor, error) {
+func (conn *Vendedordao) update(vendedor *domain.Vendedor) (*domain.Vendedor, error) {
 	dao := conn.Conn.Getdb()
 	if dao == nil {
 		return nil, errors.New("nao abriu o db")
@@ -72,7 +72,7 @@ func (conn *Vendedordao) update(vendedor *Vendedor) (*Vendedor, error) {
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(vendedor.GetuserId(), vendedor.Getquant(), vendedor.GetId())
+	_, err = stmt.Exec(vendedor.ID, vendedor.Produtos, vendedor.ID)
 	if err != nil {
 		log.Println("Erro ao executar a instrução SQL:", err)
 		return nil, err
@@ -82,8 +82,8 @@ func (conn *Vendedordao) update(vendedor *Vendedor) (*Vendedor, error) {
 }
 
 // Persist persiste o vendedor no banco de dados (insere ou atualiza dependendo da existência do ID)
-func (dao *Vendedordao) Persist(vendedor *Vendedor) (*Vendedor, error) {
-	if vendedor.GetId() == 0 {
+func (dao *Vendedordao) Persist(vendedor *domain.Vendedor) (*domain.Vendedor, error) {
+	if vendedor.ID == 0 {
 		return dao.insert(vendedor)
 	}
 	vendedor, err := dao.update(vendedor)
@@ -94,7 +94,7 @@ func (dao *Vendedordao) Persist(vendedor *Vendedor) (*Vendedor, error) {
 }
 
 // FindById retorna um vendedor com base no ID
-func (coon *Vendedordao) FindById(id int) (*Vendedor, error) {
+func (coon *Vendedordao) FindById(id int) (*domain.Vendedor, error) {
 	dao := coon.Conn.Getdb()
 	if dao == nil {
 		return nil, errors.New("erro ao obter a conexão com o banco de dados")
@@ -107,8 +107,8 @@ func (coon *Vendedordao) FindById(id int) (*Vendedor, error) {
 	}
 	defer stmt.Close()
 
-	vendedor := &Vendedor{}
-	err = stmt.QueryRow(id).Scan(&vendedor.id, &vendedor.user, &vendedor.produtos)
+	vendedor := &domain.Vendedor{}
+	err = stmt.QueryRow(id).Scan(&vendedor.ID, &vendedor.User, &vendedor.Produtos)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -119,7 +119,8 @@ func (coon *Vendedordao) FindById(id int) (*Vendedor, error) {
 
 	return vendedor, nil
 }
-func (coon *Vendedordao) FindByUserid(id int) (*Vendedor, error) {
+
+func (coon *Vendedordao) FindByUserid(id int) (*domain.Vendedor, error) {
 	dao := coon.Conn.Getdb()
 	if dao == nil {
 		return nil, errors.New("erro ao obter a conexão com o banco de dados")
@@ -132,8 +133,8 @@ func (coon *Vendedordao) FindByUserid(id int) (*Vendedor, error) {
 	}
 	defer stmt.Close()
 
-	vendedor := &Vendedor{}
-	err = stmt.QueryRow(id).Scan(&vendedor.id, &vendedor.user, &vendedor.produtos)
+	vendedor := &domain.Vendedor{}
+	err = stmt.QueryRow(id).Scan(&vendedor.ID, &vendedor.User, &vendedor.Produtos)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil

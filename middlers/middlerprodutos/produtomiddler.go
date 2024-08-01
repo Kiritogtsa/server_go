@@ -10,8 +10,8 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/Kiritogtsa/server_go/config"
-	"github.com/Kiritogtsa/server_go/src/models/produtos"
-	"github.com/Kiritogtsa/server_go/src/models/users"
+	"github.com/Kiritogtsa/server_go/internal/domain"
+	"github.com/Kiritogtsa/server_go/internal/reposity"
 )
 
 type produto struct {
@@ -28,10 +28,11 @@ type ProdutosMiddlerinterface interface {
 	SetRoutesProdutos(chi.Router)
 	Update(http.ResponseWriter, *http.Request)
 	Delete(http.ResponseWriter, *http.Request)
+	Compra(http.ResponseWriter, *http.Request)
 }
 
 type ProdutosMiddler struct {
-	Produtoscrud produtos.Produtosinterface
+	Produtoscrud reposity.Produtosinterface
 	conn         config.Config
 }
 
@@ -40,7 +41,7 @@ func NewProdutomiddler() (ProdutosMiddlerinterface, error) {
 	if err != nil {
 		return nil, err
 	}
-	produtoscrud := produtos.NewProdutoCrud(conn)
+	produtoscrud := reposity.NewProdutoCrud(conn)
 	return &ProdutosMiddler{
 		Produtoscrud: produtoscrud,
 		conn:         conn,
@@ -84,7 +85,7 @@ func (m *ProdutosMiddler) Insert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user users.User
+	var user domain.User
 	err = json.Unmarshal(userData, &user)
 	if err != nil {
 		http.Error(w, "Erro ao desserializar usuário", http.StatusInternalServerError)
@@ -95,7 +96,7 @@ func (m *ProdutosMiddler) Insert(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, " usuário nao autorilizado", http.StatusInternalServerError)
 		return
 	}
-	produto2, err := produtos.NewProduto(produto.Nome, produto.Quantidade, &user, produto.Preco)
+	produto2, err := domain.NewProduto(produto.Nome, produto.Quantidade, produto.Preco, &user)
 	if err != nil {
 		http.Error(
 			w,
@@ -186,13 +187,13 @@ func (m *ProdutosMiddler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user users.User
+	var user domain.User
 	err = json.Unmarshal(userData, &user)
 	if err != nil {
 		http.Error(w, "Erro ao desserializar usuário", http.StatusInternalServerError)
 		return
 	}
-	p := produtos.Produtos{
+	p := domain.Produtos{
 		ID:         pi,
 		Nome:       produto.Nome,
 		Quantidade: produto.Quantidade,
@@ -237,4 +238,93 @@ func (m *ProdutosMiddler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(pd)
+}
+
+func (p *ProdutosMiddler) Compra(w http.ResponseWriter, r *http.Request) {
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		http.Error(w, "Content-Type deve ser application/json", http.StatusUnsupportedMediaType)
+		return
+	}
+	type dadosc struct {
+		Id         int `json:"id"`
+		Quantidade int `json:"quantidade"`
+	}
+	var dados dadosc
+	err := json.NewDecoder(r.Body).Decode(&dados)
+	if err != nil {
+		http.Error(w, "Erro ao decodificar JSON", http.StatusBadRequest)
+		return
+	}
+	sessao, err := config.Store.Get(r, "sessao-usuario")
+	if err != nil {
+		http.Error(
+			w,
+			fmt.Sprintf("Erro ao obter a sessao: %v, \n %v", err, sessao),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+	userData, ok := sessao.Values["sessao-usuario"].([]byte)
+	if !ok {
+		http.Error(w, "Usuário não encontrado na sessão", http.StatusNotFound)
+		return
+	}
+
+	var user domain.User
+	err = json.Unmarshal(userData, &user)
+	if err != nil {
+		http.Error(w, "Erro ao desserializar usuário", http.StatusInternalServerError)
+		return
+	}
+	produto, err := p.Produtoscrud.Getbyid(dados.Id)
+	if err != nil {
+		http.Error(w, "erro ao achar o produto", http.StatusInternalServerError)
+		return
+	}
+	if produto.VendedorID != user.Vendedorid {
+		preco := produto.Preco * float64(dados.Quantidade)
+		if preco < user.Saldo {
+			quantidadeori := produto.Quantidade
+			produto.Quantidade = produto.Quantidade - dados.Quantidade
+			produto, err = p.Produtoscrud.Persistir(produto)
+			if err != nil {
+				http.Error(w, "deu algum erro no sql", http.StatusInternalServerError)
+				return
+			}
+			conn, err := config.NewConn()
+			if err != nil {
+				http.Error(w, "so deu mesmo"+"0", http.StatusInternalServerError)
+				return
+			}
+			userdao := reposity.NewUserdao(conn)
+			saldoori := user.Saldo
+			user.Saldo = user.Saldo - preco
+			_, err = userdao.Persistir(&user, "")
+			vendedor, err := userdao.GetUserByveid(produto.VendedorID)
+			if err != nil {
+				produto.Quantidade = quantidadeori
+				p.Produtoscrud.Persistir(produto)
+				user.Saldo = saldoori
+				http.Error(w, "so deu mesmo"+"2", http.StatusInternalServerError)
+				return
+			}
+			vendedor.Saldo = vendedor.Saldo + preco
+			_, err = userdao.Persistir(vendedor, "")
+			if err != nil {
+				produto.Quantidade = quantidadeori
+				p.Produtoscrud.Persistir(produto)
+				user.Saldo = saldoori
+				userdao.Persistir(&user, "")
+				http.Error(w, "so deu mesmo"+"3", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			http.Error(w, "saldo insuficiente", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		http.Error(w, "o vendedor nao pode comprar de si mesmo", http.StatusInternalServerError)
+		return
+	}
 }

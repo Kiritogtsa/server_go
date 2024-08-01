@@ -10,6 +10,8 @@
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
+
+
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
@@ -23,9 +25,9 @@ SET time_zone = "+00:00";
 
 --
 -- Estrutura para tabela `produtos`
---
 CREATE DATABASE IF NOT EXISTS `loja`;
 USE `loja`;
+
 
 CREATE TABLE `produtos` (
   `id` int(11) NOT NULL,
@@ -46,7 +48,7 @@ CREATE TABLE `usuario` (
   `nome` varchar(15) NOT NULL,
   `email` varchar(25) NOT NULL,
   `senha` text NOT NULL,
-  `vendedor` tinyint(1) NOT NULL,
+  `vendedor` BOOLEAN NOT NULL,
   `vendedor_id` int(11) DEFAULT NULL,
   `saldo` double NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -58,7 +60,7 @@ CREATE TABLE `usuario` (
 --
 
 CREATE TABLE `vendedores` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL ,
   `usuario_id` int(11) NOT NULL,
   `produtos` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -72,7 +74,7 @@ CREATE TABLE `vendedores` (
 --
 ALTER TABLE `produtos`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `nome` (`nome`),
+  ADD KEY `nome` (`nome`),
   ADD KEY `vendedor_id` (`vendedor_id`);
 
 --
@@ -84,12 +86,16 @@ ALTER TABLE `usuario`
   ADD UNIQUE KEY `email` (`email`),
   ADD KEY `fk_usuario_vendedores` (`vendedor_id`);
 
+ALTER TABLE `usuario` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 --
 -- Índices de tabela `vendedores`
 --
 ALTER TABLE `vendedores`
   ADD PRIMARY KEY (`id`),
   ADD KEY `usuario_id` (`usuario_id`);
+  
+ALTER TABLE `vendedores` MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT para tabelas despejadas
@@ -139,3 +145,16 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+CREATE TABLE `historico_compras` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `produto_id` int(11) NOT NULL,
+  `quantidade` int(11) NOT NULL,
+  `usuario_id` int(11) NOT NULL,
+  `data_compra` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `fk_historico_produto` (`produto_id`),
+  KEY `fk_historico_usuario` (`usuario_id`),
+  CONSTRAINT `fk_historico_produto` FOREIGN KEY (`produto_id`) REFERENCES `produtos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_historico_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuario` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
