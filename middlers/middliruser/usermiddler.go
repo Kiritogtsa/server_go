@@ -110,6 +110,7 @@ func (m *Usermiddler) AddUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		user.Vendedor = vendedor
+		user.Vendedorid = user.Vendedor.ID
 		user, err = m.Userdao.Persistir(user, "")
 		if err != nil {
 			http.Error(
@@ -120,6 +121,29 @@ func (m *Usermiddler) AddUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	session, err := config.Store.Get(r, "sessao-usuario")
+	if err != nil {
+		http.Error(w, "erro ao criar sessão", http.StatusInternalServerError)
+		return
+	}
+	userdata, err := json.Marshal(user)
+	if err != nil {
+		http.Error(w, "erro ao criar o json", http.StatusInternalServerError)
+		return
+	}
+	// Defina o usuário na sessão
+	session.Values["sessao-usuario"] = userdata
+	if user.ID != 0 {
+		session.Values["permisao"] = "vendedor"
+	} else {
+		session.Values["permisao"] = "usuario"
+	}
+	err = session.Save(r, w)
+	if err != nil {
+		http.Error(w, "erro ao salvar sessão", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(userdata)
 	fmt.Printf("Usuário criado: %+v\n", user)
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write(
@@ -227,7 +251,7 @@ func (m *Usermiddler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 type data struct {
-	Nome  string
+	Nome  string ``
 	Senha string
 }
 

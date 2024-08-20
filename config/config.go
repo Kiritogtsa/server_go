@@ -14,7 +14,7 @@ const (
 	dbDriver     = "mysql"
 	dbUser       = "root"
 	dbPassword   = "1234"
-	dbHost       = "mysql"
+	dbHost       = "localhost"
 	dbPort       = "3306"
 	dbName       = "loja"
 	maxWaitTime  = 60 * time.Second

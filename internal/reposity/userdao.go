@@ -23,6 +23,7 @@ type Userdaointerface interface {
 	GetUserByveid(int) (*domain.User, error)
 	GetUserbyname(string) (*domain.User, error)
 	GetUserbyemail(string) (*domain.User, error)
+	Getprodutos() ([]*domain.Produtos, error)
 }
 type Userdao struct {
 	Conn config.Config
@@ -170,7 +171,37 @@ func (userdao *Userdao) Seachbyid(id int) (*domain.User, error) {
 		}
 		user.SetVendedor(vendedor)
 	}
+	produtos, err := userdao.Getprodutos(user.ID)
+	user.Produtos = produtos
 	return user, nil
+}
+
+func (userdao *Userdao) Getprodutos(id int) ([]domain.Produtos, error) {
+	db := userdao.Conn.Getdb()
+	if db == nil {
+		return nil, errors.New("erro ao obter o banco de dados")
+	}
+	sql := "SELECT p.id,p.nome,p.preco,p.vendedor_id,h.quantidade FROM historico_compras h INNER JOIN produtos p ON h.produto_id = p.id where h.usuario_id = id"
+	rows, err := db.Query(sql, id)
+	if err != nil {
+		return nil, errors.New("erro ao obter o banco de dados")
+	}
+	defer rows.Close()
+	var produtos []domain.Produtos
+	for rows.Next() {
+		var produto domain.Produtos
+		rows.Scan(
+			&produto.ID,
+			&produto.Nome,
+			&produto.Preco,
+			&produto.VendedorID,
+			&produto.Quantidade,
+		)
+		fmt.Println("rows -->", rows)
+		fmt.Println("produto -->", produto)
+		produtos = append(produtos, produto)
+	}
+	return produtos, nil
 }
 
 func (userdao *Userdao) SeachbyName(name string) (*domain.User, error) {
@@ -207,6 +238,10 @@ func (userdao *Userdao) SeachbyName(name string) (*domain.User, error) {
 		}
 		user.SetVendedor(vendedor)
 	}
+	produtos, err := userdao.Getprodutos(user.ID)
+	if err != nil {
+	}
+	user.Produtos = produtos
 	fmt.Println("termina aqui")
 	return user, nil
 }
