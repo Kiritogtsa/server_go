@@ -23,7 +23,7 @@ type Userdaointerface interface {
 	GetUserByveid(int) (*domain.User, error)
 	GetUserbyname(string) (*domain.User, error)
 	GetUserbyemail(string) (*domain.User, error)
-	Getprodutos() ([]*domain.Produtos, error)
+	Getprodutos(int) ([]domain.Produtos, error)
 }
 type Userdao struct {
 	Conn config.Config
