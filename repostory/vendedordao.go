@@ -7,10 +7,7 @@ import (
 )
 
 type Vendedorcrud interface {
-	save(*entries.User) error
-	update(*entries.User) error
-	Persti(*entries.User) error
-	Delete(int) error
+	Crud[entries.Vendedor]
 }
 
 type Vendedordao struct {
@@ -21,15 +18,15 @@ func Newvendedor(conn *sql.Conn) Vendedorcrud {
 	return &Vendedordao{Conn: conn}
 }
 
-func (s *Vendedordao) save(*entries.User) error {
+func (s *Vendedordao) save(*entries.Vendedor) error {
 	return nil
 }
 
-func (s *Vendedordao) update(*entries.User) error {
+func (s *Vendedordao) update(*entries.Vendedor) error {
 	return nil
 }
 
-func (s *Vendedordao) Persti(*entries.User) error {
+func (s *Vendedordao) Persti(*entries.Vendedor) error {
 	return nil
 }
 

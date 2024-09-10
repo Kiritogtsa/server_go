@@ -7,10 +7,7 @@ import (
 )
 
 type Produtoscrud interface {
-	save(*entries.User) error
-	update(*entries.User) error
-	Persti(*entries.User) error
-	Delete(int) error
+	Crud[entries.Produtos]
 }
 
 type Produtosdao struct {
@@ -21,15 +18,15 @@ func Newprodutosdao(conn *sql.Conn) Produtoscrud {
 	return &Produtosdao{Conn: conn}
 }
 
-func (s *Produtosdao) save(*entries.User) error {
+func (s *Produtosdao) save(*entries.Produtos) error {
 	return nil
 }
 
-func (s *Produtosdao) update(*entries.User) error {
+func (s *Produtosdao) update(*entries.Produtos) error {
 	return nil
 }
 
-func (s *Produtosdao) Persti(*entries.User) error {
+func (s *Produtosdao) Persti(*entries.Produtos) error {
 	return nil
 }
 

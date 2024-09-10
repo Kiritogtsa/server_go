@@ -7,10 +7,9 @@ import (
 )
 
 type Usercrud interface {
-	save(*entries.User) error
-	update(*entries.User) error
-	Persti(*entries.User) error
-	Delete(int) error
+	Crud[entries.User]
+	Getbyname(string) (*entries.User, error)
+	Getbyemail(string) (*entries.User, error)
 }
 
 type Userdao struct {
@@ -35,4 +34,12 @@ func (s *Userdao) Persti(*entries.User) error {
 
 func (s *Userdao) Delete(int) error {
 	return nil
+}
+
+func (s *Userdao) Getbyname(name string) (*entries.User, error) {
+	return nil, nil
+}
+
+func (s *Userdao) Getbyemail(email string) (*entries.User, error) {
+	return nil, nil
 }
