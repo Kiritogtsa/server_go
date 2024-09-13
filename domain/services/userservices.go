@@ -8,10 +8,8 @@ import (
 )
 
 type Services_user interface {
-	verificacao() bool
-	validacao() bool
-	Createuser() bool
-	Updateuser() bool
+	services
+	// services more specific
 }
 
 type Servicesuser struct {
@@ -36,7 +34,7 @@ func (*Servicesuser) validacao() bool {
 	return true
 }
 
-func (s *Servicesuser) Createuser() bool {
+func (s *Servicesuser) Create() bool {
 	s.verificacao()
 	s.validacao()
 	usercur := *s.usercrud
@@ -48,7 +46,7 @@ func (s *Servicesuser) Createuser() bool {
 	return true
 }
 
-func (s *Servicesuser) Updateuser() bool {
+func (s *Servicesuser) Update() bool {
 	s.verificacao()
 	s.validacao()
 	usercurd := *s.usercrud
