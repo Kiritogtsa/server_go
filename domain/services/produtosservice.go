@@ -3,8 +3,7 @@ package services
 import "github.com/Kiritogtsa/server_go/domain/entries"
 
 type Services_produtos interface {
-	Vericacao() bool
-	Validacao() bool
+	services
 }
 
 type Servicesprodutos struct {
@@ -15,10 +14,22 @@ func Newserviceprodutos(produtos *entries.Produtos) Services_produtos {
 	return &Servicesprodutos{produtos: produtos}
 }
 
-func (*Servicesprodutos) Vericacao() bool {
+func (*Servicesprodutos) verificacao() bool {
 	return true
 }
 
-func (*Servicesprodutos) Validacao() bool {
+func (*Servicesprodutos) validacao() bool {
+	return true
+}
+
+func (s *Servicesprodutos) Create() bool {
+	return true
+}
+
+func (*Servicesprodutos) Update() bool {
+	return true
+}
+
+func (*Servicesprodutos) Delete() bool {
 	return true
 }
