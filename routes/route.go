@@ -5,9 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
-
 	"github.com/Kiritogtsa/server_go/handles"
+	"github.com/go-chi/chi/v5"
 )
 
 type Serverfunctions interface {
