@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Kiritogtsa/server_go/handles"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/Kiritogtsa/server_go/handles"
 )
 
 type Serverfunctions interface {
@@ -20,23 +21,22 @@ func Serverfiles(w http.ResponseWriter, r *http.Request) {
 type Server struct {
 	Router  chi.Router
 	address string
-	handle  handles.Handles
 }
 
 func Newserver(port int, address string) *Server {
 	router := chi.NewRouter()
 	address = configaddress(port, address)
-	return &Server{Router: router, address: address, handle: handles.Handles{}}
+	return &Server{Router: router, address: address}
 }
 
 func (s *Server) routespublic() {
-	s.Router.Get("/", s.handle.Getbyall)
-	s.Router.Post("/user", s.handle.CreateUser)
+	s.Router.Get("/", handles.Getbyalluser)
+	s.Router.Post("/user", handles.CreateUser)
 }
 
 func (s *Server) routesprivates() {
 	s.Router.Get("/", func(w http.ResponseWriter, r *http.Request) {})
-	s.Router.Put("/user", s.handle.Update)
+	s.Router.Put("/user", handles.Updateuser)
 }
 
 func (s *Server) Configroutes() {
