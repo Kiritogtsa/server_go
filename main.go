@@ -44,7 +44,7 @@ func main() {
 	sqldados := newdados(3306, "localhost", "root", "", "loja")
 	url := sqldados.GetConnectionURL()
 	conn := connection(url)
-	handels := handles.Newhandles(sql.Conn)
+	handels := handles.Newhandles(conn)
 	var server routes.Serverfunctions = routes.Newserver(8080, "", handels)
 	server.Configroutes()
 	server.Runserver()
