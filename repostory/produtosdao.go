@@ -12,10 +12,10 @@ type Produtoscrud interface {
 }
 
 type Produtosdao struct {
-	Conn *sql.Conn
+	Conn *sql.DB
 }
 
-func Newprodutosdao(conn *sql.Conn) Produtoscrud {
+func Newprodutosdao(conn *sql.DB) Produtoscrud {
 	return &Produtosdao{Conn: conn}
 }
 

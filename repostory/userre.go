@@ -15,11 +15,12 @@ type Usercrud interface {
 }
 
 type Userdao struct {
-	Conn     *sql.Conn
+	Conn *sql.DB
+
 	verdedor Vendedorcrud
 }
 
-func Newuserdao(conn *sql.Conn) Usercrud {
+func Newuserdao(conn *sql.DB) Usercrud {
 	return &Userdao{Conn: conn, verdedor: Newvendedor(conn)}
 }
 

@@ -11,10 +11,10 @@ type Vendedorcrud interface {
 }
 
 type Vendedordao struct {
-	Conn *sql.Conn
+	Conn *sql.DB
 }
 
-func Newvendedor(conn *sql.Conn) Vendedorcrud {
+func Newvendedor(conn *sql.DB) Vendedorcrud {
 	return &Vendedordao{Conn: conn}
 }
 
