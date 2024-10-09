@@ -7,9 +7,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/sessions"
+
 	"github.com/Kiritogtsa/server_go/domain/entries"
 	"github.com/Kiritogtsa/server_go/repostory"
 )
+
+var Store = sessions.NewCookieStore([]byte("seila"))
 
 type Handles struct {
 	UserRep *repostory.Usercrud
@@ -45,6 +49,7 @@ func (h *Handles) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if !ver {
 		w.Write([]byte("nao e tipo correto"))
 	}
+	session, _ := Store.Get(r, "seila")
 	var user entries.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -55,6 +60,17 @@ func (h *Handles) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Write([]byte("nao foi possivel criar o usuario"))
 	}
+	dados, err := json.Marshal(user)
+	if err != nil {
+		w.Write([]byte("nao foi possivel criar o usuario"))
+	}
+	session.Values["user"] = dados
+	session.Values["logado"] = true
+	err = session.Save(r, w)
+	if err != nil {
+		w.Write([]byte("nao foi possivel criar o usuario"))
+	}
+	w.Write([]byte("foi"))
 }
 
 func (h *Handles) Getbyalluser(http.ResponseWriter, *http.Request) {
