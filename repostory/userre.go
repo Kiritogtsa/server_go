@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"log"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/Kiritogtsa/server_go/domain/entries"
 )
 
@@ -29,11 +31,15 @@ func Newuserdao(conn *sql.DB) Usercrud {
 func (s *Userdao) save(user *entries.User) error {
 	sql := "insert into () values(?,?)"
 	ctx := context.Background()
+	Password, err := bcrypt.GenerateFromPassword([]byte(user.Password), 2)
+	if err != nil {
+		log.Print("nao foi possivel iniciar a transaçao com o banco de dados", err)
+	}
 	tx, err := s.Conn.BeginTx(ctx, nil)
 	if err != nil {
 		log.Print("nao foi possivel iniciar a transaçao com o banco de dados", err)
 	}
-	_, err = tx.ExecContext(ctx, sql, user.Name, user.Email)
+	_, err = tx.ExecContext(ctx, sql, user.Name, user.Email, Password)
 	if err != nil {
 		log.Print("nao foi possivel commitar a transaçao com o banco de dados", err)
 	}
@@ -57,8 +63,11 @@ func (s *Userdao) update(*entries.User) error {
 }
 
 // check the id, if exist id update he user if not exist create he user
-func (s *Userdao) Persti(*entries.User) error {
-	return nil
+func (s *Userdao) Persti(u *entries.User) error {
+	if u.ID == 0 {
+		return s.save(u)
+	}
+	return s.update(u)
 }
 
 // the function can delete auser

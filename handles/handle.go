@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/sessions"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/Kiritogtsa/server_go/domain/entries"
 	"github.com/Kiritogtsa/server_go/repostory"
@@ -43,6 +44,7 @@ func (Handles) Gettype(r *http.Request, mimetype string) bool {
 	return false
 }
 
+// nao faz parte da api
 // depois ajeitar a forma de receber os dados, para caso vire uma apu
 func (h *Handles) CreateUser(w http.ResponseWriter, r *http.Request) {
 	ver := h.Gettype(r, "application/json")
@@ -68,9 +70,47 @@ func (h *Handles) CreateUser(w http.ResponseWriter, r *http.Request) {
 	session.Values["logado"] = true
 	err = session.Save(r, w)
 	if err != nil {
-		w.Write([]byte("nao foi possivel criar o usuario"))
+		http.Error(w, "Erro ao criar usuário", http.StatusInternalServerError)
+		return
 	}
-	w.Write([]byte("foi"))
+
+	http.Redirect(w, r, "/home.http", http.StatusSeeOther)
+}
+
+// ja fazer os middleware de auteficaçao e permissao e depois testar o codigo antes de continuar o codigo
+// nao faz parte da api
+func (h *Handles) Login(w http.ResponseWriter, r *http.Request) {
+	ver := h.Gettype(r, "application/json")
+	if !ver {
+		w.Write([]byte("nao e tipo correto"))
+	}
+	session, _ := Store.Get(r, "seila")
+	var user entries.User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		w.Write([]byte("json invalido"))
+	}
+	userdao := *h.UserRep
+	u, err := userdao.Getbyname(user.Name)
+	if err != nil {
+		w.Write([]byte("erro no banco de dados"))
+	}
+	dados, err := json.Marshal(user)
+	if err != nil {
+		w.Write([]byte("senha errada"))
+	}
+	com := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(user.Password))
+	if com != nil {
+		http.Error(w, "Senha incorreta", http.StatusUnauthorized)
+		return
+	}
+	session.Values["user"] = dados
+	session.Values["logado"] = true
+	err = session.Save(r, w)
+	if err != nil {
+		w.Write([]byte(""))
+	}
+	http.Redirect(w, r, "/home.http", http.StatusSeeOther)
 }
 
 func (h *Handles) Getbyalluser(http.ResponseWriter, *http.Request) {
